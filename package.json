@@ -13,7 +13,6 @@
     "test:e2e:ui": "playwright test --ui",
     "e2e:codegen": "playwright codegen",
     "ci": "npm run lint && npm run build && npm run test:e2e",
-    "postinstall": "playwright install --with-deps",
     "changelog:add": "node scripts/add-changelog-entry.cjs",
     "changelog:status": "node scripts/add-changelog-entry.cjs --status",
     "changelog:view": "cat prd_and_plan/development_changelog.md",
