@@ -1,0 +1,365 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, X, Palette, Camera, Sparkles } from 'lucide-react';
+
+// 兜底推荐数据（精简版）
+const FALLBACK_SCENES = {
+  1: [
+    { id: 1, name: 'A-ColorfulExpressionism-1', image: '/pictures/ArtworkToBeBackgroundRecommended/A-ColorfulExpressionism-1.png', description: '色彩鲜艳的表达主义风格' },
+    { id: 4, name: 'B-ModernPaintingsWithSharpColorsAndBrushes-1', image: '/pictures/ArtworkToBeBackgroundRecommended/B-ModernPaintingsWithSharpColorsAndBrushes-1.jpeg', description: '现代画作' }
+  ],
+  3: [
+    { id: 1, name: 'D-ImpressionistLandscape-2', image: '/pictures/ArtworkToBeBackgroundRecommended/D-ImpressionistLandscape-2.jpg', description: '印象派风景' },
+    { id: 3, name: 'E-PointillismBrushstrokeAndColor-1', image: '/pictures/ArtworkToBeBackgroundRecommended/E-PointillismBrushstrokeAndColor-1.jpg', description: '点画派' }
+  ]
+};
+
+const FALLBACK_ARTWORKS = [
+  { id: 2, name: 'Girl with a Pearl Earring-Johannes Vermeer', artist: 'Johannes Vermeer', image: '/pictures/FamousArtPortraitsRecommended/Girl with a Pearl Earring-Johannes Vermeer.png', description: '戴珍珠耳环的少女' },
+  { id: 4, name: 'Lady with an Ermine-Leonardo da Vinci', artist: 'Leonardo da Vinci', image: '/pictures/FamousArtPortraitsRecommended/Lady with an Ermine-Leonardo da Vinci.png', description: '抱银鼠的女子' }
+];
+
+const SceneArtworkStep = ({ product, data, onNext, onPrev }) => {
+  const [selectionMethod, setSelectionMethod] = useState(data.selectionMethod || null);
+  const [textDescription, setTextDescription] = useState(data.textDescription || '');
+  const [uploadedImage, setUploadedImage] = useState(data.uploadedImage || null);
+  const [selectedRecommendation, setSelectedRecommendation] = useState(data.selectedRecommendation || null);
+  const [recommendations, setRecommendations] = useState([]);
+  const fileInputRef = useRef(null);
+
+  const isArtworkProduct = product.id === 2; // 名画致敬款
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        const type = isArtworkProduct ? 'artworks' : 'scenes';
+        const productId = product.id;
+        const response = await fetch(`/api/recommendations?type=${type}&productId=${productId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setRecommendations(data);
+        } else {
+          console.error('Failed to fetch recommendations');
+          // 使用兜底
+          if (isArtworkProduct) {
+            setRecommendations(FALLBACK_ARTWORKS);
+          } else {
+            setRecommendations(FALLBACK_SCENES[productId] || []);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching recommendations:', error);
+        // 使用兜底
+        if (isArtworkProduct) {
+          setRecommendations(FALLBACK_ARTWORKS);
+        } else {
+          setRecommendations(FALLBACK_SCENES[product.id] || []);
+        }
+      }
+    };
+
+    if (selectionMethod === 'recommendation') {
+      fetchRecommendations();
+    }
+  }, [selectionMethod, isArtworkProduct, product.id]);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert('文件大小不能超过10MB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setUploadedImage({
+          file: file,
+          preview: e.target.result,
+          name: file.name
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeUploadedImage = () => {
+    setUploadedImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleNext = () => {
+    const stepData = {
+      selectionMethod,
+      textDescription: selectionMethod === 'text' ? textDescription : '',
+      uploadedImage: selectionMethod === 'upload' ? uploadedImage : null,
+      selectedRecommendation: selectionMethod === 'recommendation' ? selectedRecommendation : null
+    };
+    
+    const hasValidSelection = 
+      (selectionMethod === 'text' && textDescription.trim()) ||
+      (selectionMethod === 'upload' && uploadedImage) ||
+      (selectionMethod === 'recommendation' && selectedRecommendation);
+    
+    if (hasValidSelection) {
+      onNext(stepData);
+    }
+  };
+
+  const handlePrev = () => {
+    const stepData = {
+      selectionMethod,
+      textDescription,
+      uploadedImage,
+      selectedRecommendation
+    };
+    onPrev(stepData);
+  };
+
+  const isNextDisabled = 
+    !selectionMethod ||
+    (selectionMethod === 'text' && !textDescription.trim()) ||
+    (selectionMethod === 'upload' && !uploadedImage) ||
+    (selectionMethod === 'recommendation' && !selectedRecommendation);
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-2xl shadow-lg p-8">
+        <h2 className="text-2xl font-song font-bold text-center text-[#D2B48C] mb-8 tracking-song leading-song">
+          第三步：{isArtworkProduct ? '选择名画风格' : '设定场景背景'}
+        </h2>
+
+        {/* 指导图片 */}
+        {(product.id === 1 || product.id === 2 || product.id === 3) && (
+          <div className="mb-8 flex justify-center">
+            <div className="max-w-md">
+              <img 
+                src={product.id === 1 ? '/pictures/TheClassicPortrait_GuideToSetBackground.png' : 
+                     product.id === 2 ? '/pictures/TheMasterpieceHomage_GuideToMixArtworks.png' : 
+                     '/pictures/Pose-OnlyRecreationStyle_GuideToSetBackground.png'} 
+                alt="设定指导图" 
+                className="w-full h-auto rounded-lg shadow-md"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 选择方式 */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            请选择{isArtworkProduct ? '名画' : '场景'}设定方式
+          </h3>
+          <div className="grid grid-cols-3 gap-4">
+            <button
+              onClick={() => setSelectionMethod('text')}
+              className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                selectionMethod === 'text'
+                  ? 'bg-[#D2B48C] border-[#D2B48C] text-white'
+                  : 'bg-white border-gray-300 text-gray-700 hover:border-[#D2B48C]'
+              }`}
+            >
+              <Palette className="w-8 h-8 mx-auto mb-2" />
+              <div className="text-center">
+                <div className="font-semibold">文字描述</div>
+                <div className="text-sm mt-1">{isArtworkProduct ? '描述您宠物的特征' : '用文字描述您的想法'}</div>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => setSelectionMethod('upload')}
+              className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                selectionMethod === 'upload'
+                  ? 'bg-[#D2B48C] border-[#D2B48C] text-white'
+                  : 'bg-white border-gray-300 text-gray-700 hover:border-[#D2B48C]'
+              }`}
+            >
+              <Camera className="w-8 h-8 mx-auto mb-2" />
+              <div className="text-center">
+                <div className="font-semibold">上传图片</div>
+                <div className="text-sm mt-1">上传参考图片</div>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => setSelectionMethod('recommendation')}
+              className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                selectionMethod === 'recommendation'
+                  ? 'bg-[#D2B48C] border-[#D2B48C] text-white'
+                  : 'bg-white border-gray-300 text-gray-700 hover:border-[#D2B48C]'
+              }`}
+            >
+              <Sparkles className="w-8 h-8 mx-auto mb-2" />
+              <div className="text-center">
+                <div className="font-semibold">推荐选择</div>
+                <div className="text-sm mt-1">从推荐中选择</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* 文字描述 */}
+        {selectionMethod === 'text' && (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              {isArtworkProduct ? '请描述您宠物的外貌和个性特征' : `请描述您期望的${isArtworkProduct ? '名画风格' : '场景背景'}`}
+            </h3>
+            <textarea
+              value={textDescription}
+              onChange={(e) => setTextDescription(e.target.value)}
+              placeholder={isArtworkProduct 
+                ? '例如：我的猫咪是橘色短毛，性格活泼好动，喜欢晒太阳，眼睛很大很圆，经常做出可爱的表情...'
+                : '例如：希望在樱花飞舞的公园里，阳光透过树叶洒下斑驳光影...'}
+              className="w-full h-32 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-[#D2B48C] focus:border-transparent"
+            />
+            <p className="text-sm text-gray-500 mt-2">
+              {isArtworkProduct ? '详细的描述有助于艺术顾问为您的宠物匹配最合适的肖像画艺术形象' : '详细的描述有助于画师更好地理解您的需求'}
+            </p>
+          </div>
+        )}
+
+        {/* 图片上传 */}
+        {selectionMethod === 'upload' && (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              上传参考图片
+            </h3>
+            
+            {!uploadedImage ? (
+              <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#D2B48C] transition-colors duration-200">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-lg font-semibold text-gray-700 mb-2">
+                  点击或拖拽上传参考图片
+                </p>
+                <p className="text-sm text-gray-500">
+                  支持 JPG、PNG 格式，不超过10MB
+                </p>
+              </div>
+            ) : (
+              <div className="relative inline-block">
+                <img
+                  src={uploadedImage.preview}
+                  alt={uploadedImage.name}
+                  className="max-w-xs max-h-64 rounded-lg shadow-md"
+                />
+                <button
+                  onClick={removeUploadedImage}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <p className="mt-2 text-sm text-gray-600">{uploadedImage.name}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 推荐选择 */}
+        {selectionMethod === 'recommendation' && (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              选择推荐的{isArtworkProduct ? '名画风格' : '场景背景'}
+            </h3>
+            <p className="text-gray-600 mb-4 text-sm">浏览全部推荐图片，点击任意一张进行选择</p>
+
+            {/* Mobile: 横向滚动画廊 */}
+            <div className="md:hidden overflow-x-auto scrollbar-thin pb-2 -mx-2 px-2">
+              <div className="flex items-stretch gap-3">
+                {recommendations.map((item, idx) => (
+                  <button
+                    key={item.id || `${item.name}-${idx}`}
+                    onClick={() => setSelectedRecommendation(item)}
+                    aria-pressed={selectedRecommendation?.id === item.id}
+                    className={`relative flex-shrink-0 rounded-lg overflow-hidden border transition-all duration-200 ${
+                      selectedRecommendation?.id === item.id
+                        ? 'border-[#D2B48C] ring-2 ring-[#D2B48C]'
+                        : 'border-gray-200 hover:border-[#D2B48C]'
+                    }`}
+                    style={{ height: 160, minWidth: 120 }}
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      loading="lazy"
+                      className="h-full w-auto object-cover"
+                    />
+                    {selectedRecommendation?.id === item.id && (
+                      <div className="absolute inset-0 bg-[#D2B48C]/20 pointer-events-none" />
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-xs px-2 py-1 truncate">
+                      {item.name}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Desktop: 瀑布流（masonry）布局，可垂直滚动 */}
+            <div className="hidden md:block">
+              <div className="max-h-[520px] overflow-y-auto pr-2">
+                <div className="columns-2 lg:columns-3 xl:columns-4 gap-4 [column-fill:_balance]">
+                  {recommendations.map((item, idx) => (
+                    <button
+                      key={item.id || `${item.name}-${idx}`}
+                      onClick={() => setSelectedRecommendation(item)}
+                      aria-pressed={selectedRecommendation?.id === item.id}
+                      className={`relative mb-4 w-full break-inside-avoid rounded-lg overflow-hidden border transition-all duration-200 text-left ${
+                        selectedRecommendation?.id === item.id
+                          ? 'border-[#D2B48C] ring-2 ring-[#D2B48C]'
+                          : 'border-gray-200 hover:border-[#D2B48C]'
+                      }`}
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        loading="lazy"
+                        className="w-full h-auto object-cover block"
+                      />
+                      {selectedRecommendation?.id === item.id && (
+                        <div className="absolute inset-0 bg-[#D2B48C]/20 pointer-events-none" />
+                      )}
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-xs px-2 py-1 truncate">
+                        {item.name}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 导航按钮 */}
+        <div className="flex justify-between mt-8">
+          <button
+            onClick={handlePrev}
+            className="px-8 py-3 rounded-full font-semibold text-gray-700 bg-white border-2 border-gray-300 transition-transform duration-300 transform hover:scale-105 hover:border-gray-400"
+          >
+            上一步
+          </button>
+          
+          <button
+            onClick={handleNext}
+            disabled={isNextDisabled}
+            className={`px-8 py-3 rounded-full font-bold text-lg transition-transform duration-300 transform hover:scale-105 ${
+              isNextDisabled
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-[#D2B48C] text-white hover:bg-opacity-90'
+            }`}
+          >
+            确认订单
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SceneArtworkStep;
