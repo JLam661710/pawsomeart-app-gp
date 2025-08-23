@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, X, Palette, Camera, Sparkles } from 'lucide-react';
+import { compressImage } from '../../../utils/imageCompression';
 
 // 兜底推荐数据（精简版）
 const FALLBACK_SCENES = {
@@ -62,7 +63,7 @@ const SceneArtworkStep = ({ product, data, onNext, onPrev }) => {
     }
   }, [selectionMethod, isArtworkProduct, product.id]);
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
@@ -70,15 +71,39 @@ const SceneArtworkStep = ({ product, data, onNext, onPrev }) => {
         return;
       }
       
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setUploadedImage({
-          file: file,
-          preview: e.target.result,
-          name: file.name
+      try {
+        // 压缩图片
+        const compressedFile = await compressImage(file, {
+          maxWidth: 1920,
+          maxHeight: 1920,
+          quality: 0.8,
+          maxSizeKB: 2048 // 2MB
         });
-      };
-      reader.readAsDataURL(file);
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setUploadedImage({
+            file: compressedFile,
+            preview: e.target.result,
+            name: file.name,
+            originalSize: file.size,
+            compressedSize: compressedFile.size
+          });
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        console.error('图片压缩失败:', error);
+        // 如果压缩失败，使用原文件
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setUploadedImage({
+            file: file,
+            preview: e.target.result,
+            name: file.name
+          });
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 

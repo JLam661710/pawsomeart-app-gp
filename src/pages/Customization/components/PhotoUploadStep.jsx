@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Camera, AlertCircle, Lightbulb } from 'lucide-react';
+import { compressImage } from '../../../utils/imageCompression';
 
 const PhotoUploadStep = ({ product, data, onNext, onPrev }) => {
   const [uploadedPhotos, setUploadedPhotos] = useState(data.photos || []);
@@ -80,18 +81,45 @@ const PhotoUploadStep = ({ product, data, onNext, onPrev }) => {
       validFiles.push(file);
     }
 
-    validFiles.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const newPhoto = {
-          id: Date.now() + Math.random(),
-          file: file,
-          preview: e.target.result,
-          name: file.name
+    // 压缩并处理文件
+    validFiles.forEach(async (file) => {
+      try {
+        // 压缩图片
+        const compressedFile = await compressImage(file, {
+          maxWidth: 1920,
+          maxHeight: 1920,
+          quality: 0.8,
+          maxSizeKB: 2048 // 2MB
+        });
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const newPhoto = {
+            id: Date.now() + Math.random(),
+            file: compressedFile,
+            preview: e.target.result,
+            name: file.name,
+            originalSize: file.size,
+            compressedSize: compressedFile.size
+          };
+          setUploadedPhotos(prev => [...prev, newPhoto]);
         };
-        setUploadedPhotos(prev => [...prev, newPhoto]);
-      };
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        console.error('图片压缩失败:', error);
+        // 如果压缩失败，使用原文件
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const newPhoto = {
+            id: Date.now() + Math.random(),
+            file: file,
+            preview: e.target.result,
+            name: file.name
+          };
+          setUploadedPhotos(prev => [...prev, newPhoto]);
+        };
+        reader.readAsDataURL(file);
+      }
     });
   };
 
