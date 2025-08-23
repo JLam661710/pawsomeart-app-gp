@@ -72,3 +72,4 @@ npm run test:e2e
 5. 创建 Pull Request
 
 请在提交前运行测试，并更新相关文档。开发过程中的重要修改请记录到开发日志中。
+# pawsomeart-app
