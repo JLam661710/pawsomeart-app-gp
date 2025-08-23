@@ -34,7 +34,8 @@
   ],
   "functions": {
     "api/submit-order.js": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "maxRequestBodySize": "25mb"
     },
     "api/recommendations.js": {
       "maxDuration": 10
