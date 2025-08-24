@@ -15,10 +15,10 @@
  */
 export const compressImage = (file, options = {}) => {
   const {
-    maxWidth = 1920,
-    maxHeight = 1920,
-    quality = 0.8,
-    maxSizeKB = 2048
+    maxWidth = 1200,
+    maxHeight = 1200,
+    quality = 0.6,
+    maxSizeKB = 512
   } = options;
 
   return new Promise((resolve, reject) => {

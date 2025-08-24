@@ -44,6 +44,12 @@
     "api/submit-order.js": {
       "maxDuration": 30
     },
+    "api/submit-order-batch.js": {
+      "maxDuration": 30
+    },
+    "api/upload-batch.js": {
+      "maxDuration": 30
+    },
     "api/recommendations.js": {
       "maxDuration": 10
     }

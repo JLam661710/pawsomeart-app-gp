@@ -86,10 +86,10 @@ const PhotoUploadStep = ({ product, data, onNext, onPrev }) => {
       try {
         // 压缩图片
         const compressedFile = await compressImage(file, {
-          maxWidth: 1920,
-          maxHeight: 1920,
-          quality: 0.8,
-          maxSizeKB: 2048 // 2MB
+          maxWidth: 1200,
+          maxHeight: 1200,
+          quality: 0.6,
+          maxSizeKB: 512 // 512KB
         });
         
         const reader = new FileReader();
