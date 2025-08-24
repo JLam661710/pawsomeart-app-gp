@@ -230,6 +230,10 @@ const BasicInfoStep = ({ product, data, onNext }) => {
                   </div>
                 </>
               )}
+              {/* 新增免费提示文字 */}
+              <div className="text-xs text-gray-500 mt-2 border-t border-amber-200 pt-2">
+                此处价格仅供参考，当前提交定制宠物画像流程不涉及收取任何费用。
+              </div>
             </div>
           </div>
         )}
