@@ -125,11 +125,11 @@ const productPhotoLimit: Record<number, number> = {
 
     await fillContactAndSubmit(page);
 
-    // 等待错误模态框出现
+    // 验证错误模态框出现
     await expect(page.getByRole('heading', { name: '系统服务异常' })).toBeVisible();
     
-    // 检查错误信息
-    await expect(page.getByText('server error')).toBeVisible();
+    // 检查错误信息内容
+    await expect(page.getByText('系统正在维护中，请稍后重试')).toBeVisible();
     
     // 关闭错误模态框
     await page.getByRole('button', { name: '我知道了' }).click();

@@ -6,6 +6,12 @@ import PhotoUploadStep from './components/PhotoUploadStep';
 import SceneArtworkStep from './components/SceneArtworkStep';
 import OrderConfirmation from './components/OrderConfirmation';
 import ErrorModal from '../../components/ErrorModal/ErrorModal';
+import {
+  shouldUseBatchUpload,
+  executeBatchUpload,
+  submitBatchOrder,
+  traditionalUpload
+} from '../../utils/batchUpload';
 
 const Customization = () => {
   const { productId } = useParams();
@@ -19,6 +25,17 @@ const Customization = () => {
   const [errorModal, setErrorModal] = useState({
     isOpen: false,
     error: null
+  });
+  
+  // 上传进度状态管理
+  const [uploadProgress, setUploadProgress] = useState({
+    isUploading: false,
+    useBatchUpload: false,
+    batchIndex: 0,
+    totalBatches: 0,
+    completedBatches: 0,
+    currentBatchProgress: 0,
+    overallProgress: 0
   });
   
   // 定义步骤信息
@@ -83,152 +100,257 @@ const Customization = () => {
     const finalData = { ...customizationData, contactInfo };
     console.log('[Customization] handleOrderSubmit: finalData:', finalData);
     
-    const formData = new FormData();
-  
-    // 附加所有定制化数据
-    Object.entries(finalData).forEach(([key, value]) => {
-      if (key === 'photos' && Array.isArray(value)) {
-        console.log(`[Customization] handleOrderSubmit: Processing photos array, length: ${value.length}`);
-        value.forEach((photo, index) => {
-          console.log(`[Customization] handleOrderSubmit: Photo ${index}:`, {
-            hasFile: photo.file instanceof File,
-            fileName: photo.file?.name,
-            fileSize: photo.file?.size,
-            fileType: photo.file?.type
-          });
-          if (photo.file instanceof File) {
-            formData.append('user_uploads', photo.file, photo.file.name);
-            console.log(`[Customization] handleOrderSubmit: Appended photo ${index} to FormData`);
-          } else {
-            console.warn(`[Customization] handleOrderSubmit: Photo ${index} does not have valid File object`);
-          }
-        });
-      } else if (key === 'contactInfo' && typeof value === 'object' && value !== null) {
-        console.log('[Customization] handleOrderSubmit: Processing contactInfo:', value);
-        Object.entries(value).forEach(([contactKey, contactValue]) => {
-          formData.append(contactKey, contactValue);
-          console.log(`[Customization] handleOrderSubmit: Appended contact field ${contactKey}: ${contactValue}`);
-        });
-      } else if (key === 'uploadedImage') {
-        console.log('[Customization] handleOrderSubmit: Processing uploadedImage:', {
-          isFile: value instanceof File,
-          hasFileProperty: value && value.file instanceof File,
-          value: value
-        });
-        // 支持两种形态：File 或 { file, preview, name }
-        if (value instanceof File) {
-          formData.append('uploadedImage', value, value.name);
-          console.log('[Customization] handleOrderSubmit: Appended uploadedImage (File) to FormData');
-        } else if (value && value.file instanceof File) {
-          formData.append('uploadedImage', value.file, value.file.name);
-          console.log('[Customization] handleOrderSubmit: Appended uploadedImage (object.file) to FormData');
-        } else if (value) {
-          console.warn('[Customization] handleOrderSubmit: uploadedImage exists but is not a valid File:', value);
-        }
-      } else if (typeof value === 'object' && value !== null) {
-        const jsonValue = JSON.stringify(value);
-        formData.append(key, jsonValue);
-        console.log(`[Customization] handleOrderSubmit: Appended object field ${key}: ${jsonValue}`);
-      } else if (value !== null && value !== undefined) {
-        formData.append(key, value);
-        console.log(`[Customization] handleOrderSubmit: Appended field ${key}: ${value}`);
-      }
-    });
-  
-    // 附加产品信息
-    formData.append('customization_style', product.name);
-    console.log(`[Customization] handleOrderSubmit: Appended customization_style: ${product.name}`);
+    // 设置上传状态
+    setUploadProgress(prev => ({
+      ...prev,
+      isUploading: true,
+      overallProgress: 0
+    }));
     
-    // 打印FormData内容（用于调试）
-    console.log('[Customization] handleOrderSubmit: FormData entries:');
-    for (let [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        console.log(`  ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
-      } else {
-        console.log(`  ${key}: ${value}`);
-      }
-    }
-  
     try {
-      const response = await fetch('/api/submit-order', {
-        method: 'POST',
-        body: formData,
-      });
-  
-      if (!response.ok) {
-        let errorData;
-        try {
-          const responseText = await response.text();
-          try {
-            errorData = JSON.parse(responseText);
-          } catch {
-            errorData = { message: responseText || '服务器错误' };
-          }
-        } catch {
-          errorData = { message: '网络连接错误' };
-        }
-        
-        // 解析后端返回的详细错误信息
-        const errorInfo = {
-          type: errorData.errorType || 'API_ERROR',
-          message: errorData.message || '订单提交失败',
-          fileName: errorData.fileName,
-          fileSize: errorData.fileSize,
-          details: errorData.error,
-          suggestions: errorData.suggestions || [
-            '请检查网络连接是否正常',
-            '确认所有必填信息已正确填写',
-            '如问题持续存在，请联系客服'
-          ]
-        };
-        
-        setErrorModal({
-          isOpen: true,
-          error: errorInfo
-        });
-        return;
+      // 提取文件
+      const userUploads = finalData.photos?.map(photo => photo.file).filter(file => file instanceof File) || [];
+      const referenceImages = [];
+      if (finalData.uploadedImage instanceof File) {
+        referenceImages.push(finalData.uploadedImage);
+      } else if (finalData.uploadedImage?.file instanceof File) {
+        referenceImages.push(finalData.uploadedImage.file);
       }
-  
-      const result = await response.json();
-  
-      if (result.orderId) {
-        navigate('/submission-success', { 
-          state: { orderId: result.orderId }
-        });
-        setCurrentStep(1);
-        setCustomizationData({
-          petCount: null,
-          size: null,
-          price: 0,
-          photos: [],
-          selectionMethod: null,
-          textDescription: '',
-          uploadedImage: null,
-          selectedRecommendation: null,
-          contactInfo: {}
-        });
-      } else {
-        throw new Error('订单ID无效');
-      }
-    } catch (error) {
-      console.error('Error submitting order:', error);
       
-      // 处理网络错误或其他异常
-      const errorInfo = {
-        type: 'NETWORK_ERROR',
-        message: error.message || '订单提交时发生网络错误',
-        suggestions: [
+      console.log('[Customization] 文件统计:', {
+        userUploadsCount: userUploads.length,
+        referenceImagesCount: referenceImages.length,
+        totalFiles: userUploads.length + referenceImages.length
+      });
+      
+      // 判断是否使用分批上传
+      const allFiles = [...userUploads, ...referenceImages];
+      const useBatchUpload = shouldUseBatchUpload(allFiles);
+      
+      setUploadProgress(prev => ({
+        ...prev,
+        useBatchUpload
+      }));
+      
+      console.log(`[Customization] 上传策略: ${useBatchUpload ? '分批上传' : '传统上传'}`);
+      
+      if (useBatchUpload) {
+        // 使用分批上传
+        await handleBatchUpload(userUploads, referenceImages, finalData, contactInfo);
+      } else {
+        // 使用传统上传
+        await handleTraditionalUpload(finalData);
+      }
+      
+    } catch (error) {
+      console.error('[Customization] 订单提交失败:', error);
+      
+      // 重置上传状态
+      setUploadProgress(prev => ({
+        ...prev,
+        isUploading: false,
+        overallProgress: 0
+      }));
+      
+      // 显示错误信息
+      let errorType = 'UPLOAD_ERROR';
+      let errorMessage = error.message || '订单提交时发生错误';
+      let suggestions = [
+        '请检查您的网络连接',
+        '确认所有文件格式正确',
+        '稍后重试或联系技术支持'
+      ];
+      
+      // 根据错误信息判断错误类型
+       if (error.message && (error.message.includes('500') || error.message.includes('服务器错误'))) {
+         errorType = 'API_ERROR';
+         errorMessage = '系统服务异常';
+         suggestions = [
+           '系统正在维护中，请稍后重试',
+           '如果问题持续，请联系客服'
+         ];
+       } else if (error.message && (error.message.includes('网络') || error.message.includes('network'))) {
+        errorType = 'NETWORK_ERROR';
+        errorMessage = '网络连接异常';
+        suggestions = [
           '请检查您的网络连接',
-          '确认服务器连接正常',
-          '稍后重试或联系技术支持'
-        ]
-      };
+          '尝试刷新页面重新提交',
+          '如果问题持续，请联系技术支持'
+        ];
+      }
+      
+      const errorInfo = {
+         type: errorType,
+         message: errorMessage,
+         suggestions: suggestions
+       };
       
       setErrorModal({
         isOpen: true,
         error: errorInfo
       });
     }
+  };
+  
+  // 分批上传处理函数
+  const handleBatchUpload = async (userUploads, referenceImages, finalData, contactInfo) => {
+    try {
+      console.log('[Customization] 开始分批上传流程');
+      
+      // 执行分批上传
+      const uploadResult = await executeBatchUpload(
+        userUploads,
+        referenceImages,
+        (progress) => {
+          setUploadProgress(prev => ({
+            ...prev,
+            ...progress
+          }));
+        }
+      );
+      
+      console.log('[Customization] 分批上传完成，开始提交订单');
+      
+      // 准备订单数据
+      const orderData = {
+        phone: contactInfo.phone,
+        email: contactInfo.email,
+        customization_style: product.name,
+        petCount: finalData.petCount,
+        size: finalData.size,
+        price: finalData.price,
+        selectionMethod: finalData.selectionMethod,
+        textDescription: finalData.textDescription,
+        selectedRecommendation: finalData.selectedRecommendation,
+        notes: contactInfo.notes
+      };
+      
+      // 提交分批订单
+      const submitResult = await submitBatchOrder(
+        uploadResult.batchId,
+        uploadResult.userUploads,
+        uploadResult.referenceImages,
+        orderData
+      );
+      
+      // 订单提交成功
+      handleOrderSuccess(submitResult.orderId);
+      
+    } catch (error) {
+      console.warn('[Customization] 分批上传失败，尝试降级到传统上传:', error);
+      
+      // 降级到传统上传
+      setUploadProgress(prev => ({
+        ...prev,
+        useBatchUpload: false,
+        overallProgress: 0
+      }));
+      
+      await handleTraditionalUpload(finalData);
+    }
+  };
+  
+  // 传统上传处理函数
+  const handleTraditionalUpload = async (finalData) => {
+    console.log('[Customization] 使用传统上传方式');
+    
+    // 使用传统上传工具函数
+    const result = await traditionalUpload(
+      finalData,
+      product,
+      (progress) => {
+        setUploadProgress(prev => ({
+          ...prev,
+          overallProgress: progress
+        }));
+      }
+    );
+    
+    // 订单提交成功
+    handleOrderSuccess(result.orderId);
+  };
+  
+  // 原有的 FormData 构建逻辑（保留作为备用）
+  const buildFormDataLegacy = (finalData) => {
+    const formData = new FormData();
+    
+    // 添加用户上传的照片
+    if (finalData.photos && finalData.photos.length > 0) {
+      finalData.photos.forEach((photo, index) => {
+        if (photo.file instanceof File) {
+          formData.append('user_uploads', photo.file);
+          console.log(`[Customization] buildFormDataLegacy: Added user_uploads[${index}]:`, photo.file.name);
+        }
+      });
+    }
+    
+    // 添加联系信息
+    if (finalData.contactInfo?.phone) {
+      formData.append('phone', finalData.contactInfo.phone);
+    }
+    if (finalData.contactInfo?.email) {
+      formData.append('email', finalData.contactInfo.email);
+    }
+    
+    // 添加参考图
+    if (finalData.uploadedImage) {
+      if (finalData.uploadedImage instanceof File) {
+        formData.append('uploadedImage', finalData.uploadedImage);
+      } else if (finalData.uploadedImage.file instanceof File) {
+        formData.append('uploadedImage', finalData.uploadedImage.file);
+      }
+    }
+    
+    // 添加其他定制化数据
+    formData.append('customization_style', product.name);
+    formData.append('petCount', finalData.petCount);
+    formData.append('size', finalData.size);
+    formData.append('price', finalData.price);
+    formData.append('selectionMethod', finalData.selectionMethod);
+    formData.append('textDescription', finalData.textDescription || '');
+    formData.append('selectedRecommendation', JSON.stringify(finalData.selectedRecommendation || null));
+    if (finalData.contactInfo?.notes) {
+      formData.append('notes', finalData.contactInfo.notes);
+    }
+    
+    return formData;
+  };
+
+  // 订单成功处理函数
+  const handleOrderSuccess = (orderId) => {
+    console.log('[Customization] 订单提交成功，订单ID:', orderId);
+    
+    // 重置上传状态
+    setUploadProgress({
+      isUploading: false,
+      useBatchUpload: false,
+      batchIndex: 0,
+      totalBatches: 0,
+      completedBatches: 0,
+      currentBatchProgress: 0,
+      overallProgress: 100
+    });
+    
+    // 跳转到成功页面
+    navigate('/submission-success', { 
+      state: { orderId: orderId }
+    });
+    
+    // 重置定制数据
+    setCurrentStep(1);
+    setCustomizationData({
+      petCount: null,
+      size: null,
+      price: 0,
+      photos: [],
+      selectionMethod: null,
+      textDescription: '',
+      uploadedImage: null,
+      selectedRecommendation: null,
+      contactInfo: {}
+    });
+    
+    console.log('[Customization] 订单处理完成');
   };
 
   // 处理下一步
@@ -301,6 +423,32 @@ const Customization = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
+      {/* 上传进度显示 */}
+      {uploadProgress.isUploading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">正在处理您的订单...</h3>
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                {uploadProgress.useBatchUpload ? '分批上传模式' : '标准上传模式'}
+              </p>
+              {uploadProgress.useBatchUpload && (
+                <p className="text-sm text-gray-600 mb-2">
+                  批次进度: {uploadProgress.completedBatches}/{uploadProgress.totalBatches}
+                </p>
+              )}
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+              <div 
+                className="bg-[#D2B48C] h-2 rounded-full transition-all duration-300" 
+                style={{ width: `${uploadProgress.overallProgress}%` }}
+              ></div>
+            </div>
+            <p className="text-center text-sm text-gray-600">{Math.round(uploadProgress.overallProgress)}%</p>
+          </div>
+        </div>
+      )}
+      
       <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* 进度指示器 */}
         <div className="mb-8">
