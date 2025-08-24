@@ -75,8 +75,14 @@ export const groupFilesIntoBatches = (files) => {
     
     const MAX_BATCH_SIZE = 8 * 1024 * 1024; // 8MB per batch
     const MAX_BATCH_FILES = 4; // 每批最多4个文件
+    const MAX_SINGLE_FILE_SIZE = 9 * 1024 * 1024; // 单个文件最大9MB
     
     for (const file of files) {
+        // 检查单个文件是否超过最大限制
+        if (file.size > MAX_SINGLE_FILE_SIZE) {
+            throw new Error(`文件 "${file.name}" 大小为 ${(file.size / 1024 / 1024).toFixed(2)}MB，超过单个文件最大限制 ${(MAX_SINGLE_FILE_SIZE / 1024 / 1024).toFixed(2)}MB`);
+        }
+        
         // 如果单个文件就超过批次大小限制，单独成为一个批次
         if (file.size > MAX_BATCH_SIZE) {
             // 先处理当前批次

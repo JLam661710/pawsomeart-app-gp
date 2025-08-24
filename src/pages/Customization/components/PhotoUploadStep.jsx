@@ -74,8 +74,8 @@ const PhotoUploadStep = ({ product, data, onNext, onPrev }) => {
       }
 
       // 2. File Size Validation
-      if (file.size > 10 * 1024 * 1024) { // 10MB
-        setError(`文件大小超过10MB限制: ${file.name}`);
+      if (file.size > 9 * 1024 * 1024) { // 9MB
+        setError(`文件大小超过9MB限制: ${file.name}`);
         continue; // Skip this file
       }
       validFiles.push(file);
@@ -163,7 +163,7 @@ const PhotoUploadStep = ({ product, data, onNext, onPrev }) => {
                     <li>• 请上传清晰、光线充足的宠物照片</li>
                     <li>• 建议多角度拍摄，包括正面、侧面等</li>
                     <li>• 照片中宠物应占据主要位置</li>
-                    <li>• 支持 JPG、PNG 格式，单张不超过10MB</li>
+                    <li>• 支持 JPG、PNG 格式，单张不超过9MB</li>
                     {product.series === '参考照片创作系列' ? (
                       <li>• 当前模式仅支持上传一张照片供创作参考，请精选您最心仪的一张宠物美照吧</li>
                     ) : (

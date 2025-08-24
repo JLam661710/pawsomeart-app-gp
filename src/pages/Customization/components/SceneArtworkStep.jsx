@@ -66,8 +66,8 @@ const SceneArtworkStep = ({ product, data, onNext, onPrev }) => {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        alert('文件大小不能超过10MB');
+      if (file.size > 9 * 1024 * 1024) {
+        alert('文件大小不能超过9MB');
         return;
       }
       
@@ -264,7 +264,7 @@ const SceneArtworkStep = ({ product, data, onNext, onPrev }) => {
                   点击或拖拽上传参考图片
                 </p>
                 <p className="text-sm text-gray-500">
-                  支持 JPG、PNG 格式，不超过10MB
+                  支持 JPG、PNG 格式，不超过9MB
                 </p>
               </div>
             ) : (

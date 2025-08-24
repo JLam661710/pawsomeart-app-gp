@@ -20,6 +20,10 @@ export const compressImage = (file, options = {}) => {
     quality = 0.6,
     maxSizeKB = 512
   } = options;
+  
+  // 确保压缩后的文件不会超过API限制（9MB）
+  const MAX_API_SIZE_KB = 9 * 1024; // 9MB
+  const effectiveMaxSize = Math.min(maxSizeKB, MAX_API_SIZE_KB);
 
   return new Promise((resolve, reject) => {
     // 检查文件类型
@@ -29,7 +33,7 @@ export const compressImage = (file, options = {}) => {
     }
 
     // 如果文件已经很小，直接返回
-    if (file.size <= maxSizeKB * 1024) {
+    if (file.size <= effectiveMaxSize * 1024) {
       resolve(file);
       return;
     }
@@ -65,7 +69,7 @@ export const compressImage = (file, options = {}) => {
           }
 
           // 如果压缩后仍然太大，降低质量重试
-          if (blob.size > maxSizeKB * 1024 && quality > 0.1) {
+          if (blob.size > effectiveMaxSize * 1024 && quality > 0.1) {
             const newOptions = { ...options, quality: quality * 0.8 };
             compressImage(file, newOptions).then(resolve).catch(reject);
             return;
