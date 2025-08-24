@@ -53,8 +53,9 @@ const parseForm = (req) => {
                         console.log(`[submit-order] parseForm: Processing file - fieldname: ${f.fieldname}, originalname: ${f.originalname}, size: ${f.size}`);
                         if (!mapByField[f.fieldname]) mapByField[f.fieldname] = [];
                         // 将 buffer 写入临时文件，便于后续以流形式上传至飞书
-                        const tmpDir = path.join(process.cwd(), 'temp', 'uploads');
-                        if (!fs.existsSync(tmpDir)) {
+                        // 在Vercel环境中使用/tmp目录
+                        const tmpDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'temp', 'uploads');
+                        if (!process.env.VERCEL && !fs.existsSync(tmpDir)) {
                             fs.mkdirSync(tmpDir, { recursive: true });
                         }
                         const tmpPath = path.join(tmpDir, `.tmp_upload_${Date.now()}_${Math.random().toString(36).slice(2)}`);
@@ -230,7 +231,8 @@ const mapMasterpieceMethod = (method) => {
  */
 const cleanupTempFiles = () => {
     try {
-        const tempDir = path.join(process.cwd(), 'temp', 'uploads');
+        // 在Vercel环境中使用/tmp目录
+        const tempDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'temp', 'uploads');
         if (!fs.existsSync(tempDir)) return;
         
         const files = fs.readdirSync(tempDir);
