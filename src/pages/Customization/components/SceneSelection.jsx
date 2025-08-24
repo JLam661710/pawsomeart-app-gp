@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { compressImage } from '../../../utils/imageCompression';
 
 const SceneSelection = ({ product, photoType, portraitType, onComplete, onBack }) => {
   const [sceneMethod, setSceneMethod] = useState(null); // 'text', 'upload', 'recommendation'
@@ -40,13 +41,46 @@ const SceneSelection = ({ product, photoType, portraitType, onComplete, onBack }
     { id: 8, name: '广阔印象', image: '/pictures/ArtworkToBeBackgroundRecommended/G-TheImpressionOfAVastAndShallowPlace-1.png' }
   ], []);
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-      setUploadedScene({
-        file,
-        preview: URL.createObjectURL(file)
-      });
+    if (file) {
+      // 文件大小验证
+      if (file.size > 9 * 1024 * 1024) {
+        alert('文件大小不能超过9MB');
+        return;
+      }
+      
+      // 文件类型验证
+      if (!file.type.startsWith('image/')) {
+        alert('请上传图片文件');
+        return;
+      }
+      
+      try {
+        // 压缩图片
+        const compressedFile = await compressImage(file, {
+          maxWidth: 1200,
+          maxHeight: 1200,
+          quality: 0.6,
+          maxSizeKB: 512 // 512KB
+        });
+        
+        setUploadedScene({
+          file: compressedFile,
+          preview: URL.createObjectURL(compressedFile),
+          name: file.name,
+          originalSize: file.size,
+          compressedSize: compressedFile.size
+        });
+      } catch (error) {
+        console.error('图片压缩失败:', error);
+        // 如果压缩失败，使用原文件
+        setUploadedScene({
+          file: file,
+          preview: URL.createObjectURL(file),
+          name: file.name
+        });
+      }
     }
   };
 
@@ -199,7 +233,7 @@ const SceneSelection = ({ product, photoType, portraitType, onComplete, onBack }
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
               <p className="text-lg font-medium text-gray-700 mb-2">点击上传场景图片</p>
-              <p className="text-sm text-gray-500 mb-4">支持 JPG、PNG、WEBP 格式</p>
+              <p className="text-sm text-gray-500 mb-4">支持 JPG、PNG、WEBP 格式，不超过9MB</p>
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="bg-[#D2B48C] text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-colors"
@@ -221,7 +255,13 @@ const SceneSelection = ({ product, photoType, portraitType, onComplete, onBack }
                 alt="场景预览"
                 className="max-w-md mx-auto rounded-lg shadow-md mb-4"
               />
-              <p className="text-sm text-gray-600 mb-4">{uploadedScene.file.name}</p>
+              <p className="text-sm text-gray-600 mb-4">{uploadedScene.name || uploadedScene.file.name}</p>
+              {uploadedScene.originalSize && uploadedScene.compressedSize && (
+                <p className="text-xs text-gray-500 mb-4">
+                  原始大小: {(uploadedScene.originalSize / 1024 / 1024).toFixed(2)}MB → 
+                  压缩后: {(uploadedScene.compressedSize / 1024 / 1024).toFixed(2)}MB
+                </p>
+              )}
               <button
                 onClick={() => setUploadedScene(null)}
                 className="text-red-600 hover:text-red-800 transition-colors"
