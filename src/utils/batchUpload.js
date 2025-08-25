@@ -17,21 +17,31 @@ export const calculateTotalSize = (files) => {
 };
 
 /**
- * 判断是否需要使用分批上传
- * @param {File[]} files - 文件数组
- * @returns {boolean} 是否需要分批上传
+ * 判断是否需要使用分批上传（优化版）
  */
 export const shouldUseBatchUpload = (files) => {
     const totalSize = calculateTotalSize(files);
     const fileCount = files.length;
     
-    // 判断条件：
-    // 1. 文件总大小超过 15MB
-    // 2. 文件数量超过 10 个
-    // 3. 单个文件超过 8MB
-    const SIZE_THRESHOLD = 15 * 1024 * 1024; // 15MB
-    const COUNT_THRESHOLD = 10;
-    const SINGLE_FILE_THRESHOLD = 8 * 1024 * 1024; // 8MB
+    // 新的判断条件（更严格）：
+    // 1. 文件总大小超过 3.5MB（留出0.5MB缓冲）
+    // 2. 文件数量超过 5 个
+    // 3. 单个文件超过 6MB
+    // 4. 硬性规则：6张及以上图片强制批量上传
+    
+    const SIZE_THRESHOLD = 3.5 * 1024 * 1024; // 3.5MB
+    const COUNT_THRESHOLD = 5;
+    const SINGLE_FILE_THRESHOLD = 6 * 1024 * 1024; // 6MB
+    const FORCE_BATCH_COUNT = 6; // 6张及以上强制批量上传
+    
+    // 硬性规则：6张及以上强制批量上传
+    if (fileCount >= FORCE_BATCH_COUNT) {
+        console.log('[batchUpload] 强制触发分批上传：文件数量>=6', {
+            fileCount,
+            reason: 'FORCE_BATCH_FOR_MULTIPLE_FILES'
+        });
+        return true;
+    }
     
     if (totalSize > SIZE_THRESHOLD) {
         console.log('[batchUpload] 触发分批上传：总大小超过阈值', {

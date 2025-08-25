@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Camera, AlertCircle, Lightbulb } from 'lucide-react';
-import { compressImage } from '../../../utils/imageCompression';
+// 添加缺失的导入
+import { compressImage, compressImagesSmart } from '../../../utils/imageCompression';
+import { preUploadCheck } from '../../../utils/uploadPrecheck';
 
 const PhotoUploadStep = ({ product, data, onNext, onPrev }) => {
   const [uploadedPhotos, setUploadedPhotos] = useState(data.photos || []);
@@ -57,14 +59,26 @@ const PhotoUploadStep = ({ product, data, onNext, onPrev }) => {
     e.target.value = ''; // Reset file input
   };
 
-  const handleFiles = (files) => {
-    setError(null); // Reset error state
-
+  // 在handleFiles函数中添加智能压缩
+  const handleFiles = async (files) => {
+    setError(null);
+    
     if (uploadedPhotos.length + files.length > photoUploadLimit) {
       setError(`最多只能上传${photoUploadLimit}张照片。`);
       return;
     }
-
+    
+    // 预检查
+    const allFiles = [...uploadedPhotos.map(p => p.file), ...files];
+    const precheck = await preUploadCheck(allFiles);
+    
+    console.log('[PhotoUpload] 预检查结果:', precheck);
+    
+    // 显示风险提示
+    if (precheck.riskLevel === 'high') {
+      setError(`检测到上传风险：${precheck.recommendations.join('，')}`);
+    }
+    
     const validFiles = [];
     for (const file of files) {
       // 1. File Type Validation
@@ -72,7 +86,7 @@ const PhotoUploadStep = ({ product, data, onNext, onPrev }) => {
         setError(`不支持的文件类型: ${file.name}。请上传 JPG 或 PNG 格式的图片。`);
         continue; // Skip this file
       }
-
+  
       // 2. File Size Validation
       if (file.size > 9 * 1024 * 1024) { // 9MB
         setError(`文件大小超过9MB限制: ${file.name}`);
@@ -80,47 +94,31 @@ const PhotoUploadStep = ({ product, data, onNext, onPrev }) => {
       }
       validFiles.push(file);
     }
-
-    // 压缩并处理文件
-    validFiles.forEach(async (file) => {
-      try {
-        // 压缩图片
-        const compressedFile = await compressImage(file, {
-          maxWidth: 1200,
-          maxHeight: 1200,
-          quality: 0.6,
-          maxSizeKB: 512 // 512KB
-        });
-        
+  
+    // 使用智能压缩
+    try {
+      const compressedFiles = await compressImagesSmart(validFiles);
+      
+      compressedFiles.forEach((compressedFile, index) => {
+        const originalFile = validFiles[index];
         const reader = new FileReader();
         reader.onload = (e) => {
           const newPhoto = {
-            id: Date.now() + Math.random(),
+            id: Date.now() + Math.random() + index,
             file: compressedFile,
             preview: e.target.result,
-            name: file.name,
-            originalSize: file.size,
+            name: originalFile.name,
+            originalSize: originalFile.size,
             compressedSize: compressedFile.size
           };
           setUploadedPhotos(prev => [...prev, newPhoto]);
         };
         reader.readAsDataURL(compressedFile);
-      } catch (error) {
-        console.error('图片压缩失败:', error);
-        // 如果压缩失败，使用原文件
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const newPhoto = {
-            id: Date.now() + Math.random(),
-            file: file,
-            preview: e.target.result,
-            name: file.name
-          };
-          setUploadedPhotos(prev => [...prev, newPhoto]);
-        };
-        reader.readAsDataURL(file);
-      }
-    });
+      });
+    } catch (error) {
+      console.error('智能压缩失败:', error);
+      setError('图片处理失败，请重试');
+    }
   };
 
   const removePhoto = (photoId) => {
