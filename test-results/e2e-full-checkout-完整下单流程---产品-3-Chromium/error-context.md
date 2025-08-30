@@ -1,0 +1,110 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - link "PawsomeArt Logo" [ref=e6] [cursor=pointer]:
+      - /url: /
+      - img "PawsomeArt Logo" [ref=e7] [cursor=pointer]
+  - generic [ref=e8]:
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - generic [ref=e12]:
+            - generic [ref=e13]: "1"
+            - generic [ref=e14]: 基础信息
+          - generic [ref=e16]:
+            - generic [ref=e17]: "2"
+            - generic [ref=e18]: 上传照片
+          - generic [ref=e20]:
+            - generic [ref=e21]: "3"
+            - generic [ref=e22]: 场景设定
+          - generic [ref=e24]:
+            - generic [ref=e25]: "4"
+            - generic [ref=e26]: 订单确认
+        - paragraph [ref=e27]: 定制您的 "姿态保留款"
+      - generic [ref=e29]:
+        - heading "订单确认" [level=2] [ref=e30]
+        - generic [ref=e31]:
+          - heading "订单摘要" [level=3] [ref=e32]:
+            - img [ref=e33]
+            - text: 订单摘要
+          - generic [ref=e37]:
+            - generic [ref=e38]:
+              - generic [ref=e40]: 姿态保留款
+              - generic [ref=e41]:
+                - generic [ref=e42]: ¥328
+                - generic [ref=e43]: 8寸
+            - generic [ref=e44]:
+              - generic [ref=e45]:
+                - generic [ref=e46]: 宠物数量
+                - generic [ref=e47]: 1只
+              - generic [ref=e48]:
+                - generic [ref=e49]: 画像尺寸
+                - generic [ref=e50]: 8寸
+            - generic [ref=e51]:
+              - generic [ref=e52]:
+                - img [ref=e53]
+                - text: 上传照片
+              - generic [ref=e56]: 已上传 1 张照片
+            - generic [ref=e57]:
+              - generic [ref=e58]:
+                - img [ref=e59]
+                - text: 场景背景（文字描述）
+              - generic [ref=e65]: 请使用柔和的色调与温暖的光影，突出宠物的眼神。
+        - generic [ref=e66]:
+          - heading "联系信息" [level=3] [ref=e67]:
+            - img [ref=e68]
+            - text: 联系信息
+          - generic [ref=e70]:
+            - generic [ref=e71]:
+              - generic [ref=e72]:
+                - generic [ref=e73]: 联系电话 *
+                - textbox "联系电话 *" [ref=e74]: "13800138000"
+              - generic [ref=e75]:
+                - generic [ref=e76]: 邮箱地址
+                - textbox "邮箱地址" [ref=e77]
+            - generic [ref=e78]:
+              - generic [ref=e79]: 备注信息
+              - textbox "备注信息" [ref=e80]
+        - generic [ref=e82]:
+          - img [ref=e83]
+          - generic [ref=e88]:
+            - paragraph [ref=e89]: 服务说明：
+            - list [ref=e90]:
+              - listitem [ref=e91]: • 订单确认后，我们将在1-2个工作日内与您联系确认细节
+              - listitem [ref=e92]: • 画作制作周期为3-5个工作日
+              - listitem [ref=e93]: • 制作完成后将通过您提供的联系方式发送预览图
+              - listitem [ref=e94]: • 快递与物流相关服务细节将会有客服专员与您沟通提供支持
+              - listitem [ref=e95]: • 如有任何问题，请随时联系客服
+        - generic [ref=e96]:
+          - button "上一步" [ref=e97] [cursor=pointer]
+          - button "确认提交订单" [ref=e98] [cursor=pointer]:
+            - img [ref=e99] [cursor=pointer]
+            - generic [ref=e101] [cursor=pointer]: 确认提交订单
+    - generic [ref=e104]:
+      - generic [ref=e105]:
+        - generic [ref=e106]:
+          - img [ref=e107]
+          - heading "操作失败" [level=3] [ref=e109]
+        - button [ref=e110] [cursor=pointer]:
+          - img [ref=e111] [cursor=pointer]
+      - generic [ref=e114]:
+        - paragraph [ref=e116]: 请求失败 (429)
+        - generic [ref=e117]:
+          - heading "建议解决方案：" [level=4] [ref=e118]:
+            - img [ref=e119]
+            - text: 建议解决方案：
+          - list [ref=e124]:
+            - listitem [ref=e125]:
+              - generic [ref=e127]: 请检查您的网络连接
+            - listitem [ref=e128]:
+              - generic [ref=e130]: 确认所有文件格式正确
+            - listitem [ref=e131]:
+              - generic [ref=e133]: 稍后重试或联系技术支持
+      - generic [ref=e134]:
+        - button "我知道了" [ref=e135] [cursor=pointer]
+        - button "重新尝试" [ref=e136] [cursor=pointer]:
+          - img [ref=e137] [cursor=pointer]
+          - generic [ref=e142] [cursor=pointer]: 重新尝试
+```

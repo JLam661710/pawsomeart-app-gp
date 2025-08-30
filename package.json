@@ -22,13 +22,10 @@
     "capacity:monitor": "node scripts/capacity-monitor.js monitor",
     "capacity:report": "node scripts/capacity-monitor.js report",
     "capacity:check": "node scripts/capacity-monitor.js check",
-    "deploy": "./deploy.sh",
-    "deploy:quick": "npx vercel --prod",
-    "deploy:preview": "npx vercel",
-    "vercel:login": "npx vercel login",
-    "vercel:link": "npx vercel link",
-    "vercel:logs": "npx vercel logs",
-    "vercel:list": "npx vercel ls"
+    "deploy": "npm run build",
+    "deploy:frontend": "npm run build && echo 'Push to main branch to trigger GitHub Pages deployment'",
+    "deploy:functions": "echo 'Use veFaaS Code Deployer or Serverless Devs to deploy functions'",
+    "build:production": "NODE_ENV=production npm run build"
   },
 
   "dependencies": {

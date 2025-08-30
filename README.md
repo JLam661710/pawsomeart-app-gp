@@ -130,31 +130,37 @@ npm run capacity:check
 
 ## 🚀 部署
 
-### Vercel部署（推荐）
+### 火山引擎函数服务 + GitHub Pages 部署（推荐）
+
+#### 前端部署（GitHub Pages）
 ```bash
-# 快速部署到生产环境
-npm run deploy:quick
+# 构建前端项目
+npm run build
 
-# 部署预览版本
-npm run deploy:preview
-
-# 完整部署流程
-npm run deploy
+# 通过 GitHub Actions 自动部署到 GitHub Pages
+# 推送到 main 分支即可触发自动部署
+git push origin main
 ```
 
-### Vercel管理
+#### 后端部署（火山引擎函数服务）
 ```bash
-# 登录Vercel
-npm run vercel:login
+# 使用 veFaaS Code Deployer 插件部署函数
+# 或使用 Serverless Devs 工具部署
 
-# 链接项目
-npm run vercel:link
+# 部署单个函数示例
+s deploy --template template.yaml
+```
 
-# 查看日志
-npm run vercel:logs
+### 部署管理
+```bash
+# 查看前端部署状态
+# 访问 GitHub Actions 页面查看部署状态
 
-# 列出项目
-npm run vercel:list
+# 查看后端函数日志
+# 在火山引擎控制台查看函数执行日志
+
+# 本地开发服务器
+npm run dev
 ```
 
 ## 📁 项目结构

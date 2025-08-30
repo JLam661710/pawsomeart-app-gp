@@ -1,0 +1,105 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - link "PawsomeArt Logo" [ref=e6] [cursor=pointer]:
+      - /url: /
+      - img "PawsomeArt Logo" [ref=e7] [cursor=pointer]
+  - generic [ref=e8]:
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - generic [ref=e12]:
+            - generic [ref=e13]: "1"
+            - generic [ref=e14]: 基础信息
+          - generic [ref=e16]:
+            - generic [ref=e17]: "2"
+            - generic [ref=e18]: 上传照片
+          - generic [ref=e20]:
+            - generic [ref=e21]: "3"
+            - generic [ref=e22]: 场景设定
+          - generic [ref=e24]:
+            - generic [ref=e25]: "4"
+            - generic [ref=e26]: 订单确认
+        - paragraph [ref=e27]: 定制您的 "场景复刻款"
+      - generic [ref=e29]:
+        - heading "订单确认" [level=2] [ref=e30]
+        - generic [ref=e31]:
+          - heading "订单摘要" [level=3] [ref=e32]:
+            - img [ref=e33]
+            - text: 订单摘要
+          - generic [ref=e37]:
+            - generic [ref=e38]:
+              - generic [ref=e40]: 场景复刻款
+              - generic [ref=e41]:
+                - generic [ref=e42]: ¥328
+                - generic [ref=e43]: 8寸
+            - generic [ref=e44]:
+              - generic [ref=e45]:
+                - generic [ref=e46]: 宠物数量
+                - generic [ref=e47]: 1只
+              - generic [ref=e48]:
+                - generic [ref=e49]: 画像尺寸
+                - generic [ref=e50]: 8寸
+            - generic [ref=e51]:
+              - generic [ref=e52]:
+                - img [ref=e53]
+                - text: 上传照片
+              - generic [ref=e56]: 已上传 1 张照片
+        - generic [ref=e57]:
+          - heading "联系信息" [level=3] [ref=e58]:
+            - img [ref=e59]
+            - text: 联系信息
+          - generic [ref=e61]:
+            - generic [ref=e62]:
+              - generic [ref=e63]:
+                - generic [ref=e64]: 联系电话 *
+                - textbox "联系电话 *" [ref=e65]: "13800138000"
+              - generic [ref=e66]:
+                - generic [ref=e67]: 邮箱地址
+                - textbox "邮箱地址" [ref=e68]
+            - generic [ref=e69]:
+              - generic [ref=e70]: 备注信息
+              - textbox "备注信息" [ref=e71]
+        - generic [ref=e73]:
+          - img [ref=e74]
+          - generic [ref=e79]:
+            - paragraph [ref=e80]: 服务说明：
+            - list [ref=e81]:
+              - listitem [ref=e82]: • 订单确认后，我们将在1-2个工作日内与您联系确认细节
+              - listitem [ref=e83]: • 画作制作周期为3-5个工作日
+              - listitem [ref=e84]: • 制作完成后将通过您提供的联系方式发送预览图
+              - listitem [ref=e85]: • 快递与物流相关服务细节将会有客服专员与您沟通提供支持
+              - listitem [ref=e86]: • 如有任何问题，请随时联系客服
+        - generic [ref=e87]:
+          - button "上一步" [ref=e88] [cursor=pointer]
+          - button "确认提交订单" [ref=e89] [cursor=pointer]:
+            - img [ref=e90] [cursor=pointer]
+            - generic [ref=e92] [cursor=pointer]: 确认提交订单
+    - generic [ref=e95]:
+      - generic [ref=e96]:
+        - generic [ref=e97]:
+          - img [ref=e98]
+          - heading "操作失败" [level=3] [ref=e100]
+        - button [ref=e101] [cursor=pointer]:
+          - img [ref=e102] [cursor=pointer]
+      - generic [ref=e105]:
+        - paragraph [ref=e107]: 请求失败 (429)
+        - generic [ref=e108]:
+          - heading "建议解决方案：" [level=4] [ref=e109]:
+            - img [ref=e110]
+            - text: 建议解决方案：
+          - list [ref=e115]:
+            - listitem [ref=e116]:
+              - generic [ref=e118]: 请检查您的网络连接
+            - listitem [ref=e119]:
+              - generic [ref=e121]: 确认所有文件格式正确
+            - listitem [ref=e122]:
+              - generic [ref=e124]: 稍后重试或联系技术支持
+      - generic [ref=e125]:
+        - button "我知道了" [ref=e126] [cursor=pointer]
+        - button "重新尝试" [ref=e127] [cursor=pointer]:
+          - img [ref=e128] [cursor=pointer]
+          - generic [ref=e133] [cursor=pointer]: 重新尝试
+```

@@ -11,10 +11,10 @@ PawsomeArt 定制应用技术选型与框架设计文档 (飞书直传方案)
 暂时无法在飞书文档外展示此内容
 3. 应用架构与数据流
 本应用采用“前端 + 轻量后端”架构，数据流清晰高效：
-1. 用户访问: 用户在微信中扫码，打开部署在 Vercel 上的 React 应用。
+1. 用户访问: 用户在微信中扫码，打开部署在 GitHub Pages 上的 React 应用。
 2. 前端交互: 用户在应用中填写表单，选择并上传图片。
 3. 数据打包 (前端): 用户点击提交按钮时，前端将所有文本数据和图片文件打包成一个 FormData 对象。
-4. 提交到云函数 (前端): 前端使用 fetch API，将 FormData 对象发送到我们部署在 Vercel 上的 Serverless Function 端点（例如 /api/submit）。
+4. 提交到云函数 (前端): 前端使用 fetch API，将 FormData 对象发送到我们部署在火山引擎函数服务上的 HTTP 触发器端点（例如 https://api-gateway-domain.com/api/submit）。
 5. 云函数处理 (后端): 这是关键的自动化处理步骤：
 6. a. 云函数接收到前端发来的数据。
 7. b. 第一步 - 上传图片: 云函数调用飞书的**“上传附件”API**，将图片文件逐个上传到飞书的服务器，并从飞书获取每张图片的 file_token（图片收据）。
@@ -89,10 +89,15 @@ PawsomeArt 定制应用技术选型与框架设计文档 (飞书直传方案)
 }
 ```
 12. 项目文件夹结构
-此结构适用于 Vercel 平台，前端和云函数代码在同一个项目中。
+此结构适用于火山引擎函数服务 + GitHub Pages 架构，前后端分离部署。
+
+### 前端项目结构（部署至 GitHub Pages）
 pawsomeart-app/
-├── api/                   # 存放 Serverless Function 的代码
-│   └── submit.js          # 核心处理逻辑就在这个文件里
+├── api/                   # 原 Vercel 函数代码（迁移参考）
+│   ├── submit-order.js
+│   ├── submit-order-batch.js
+│   ├── upload-batch.js
+│   └── recommendations.js
 ├── public/                # 静态资源
 ├── src/
 │   ├── assets/            # 存放所有静态图片资源
@@ -102,26 +107,42 @@ pawsomeart-app/
 │   ├── utils/             # 工具函数
 │   ├── App.jsx
 │   └── main.jsx
-├── .env.local             # 环境变量文件
+├── .github/workflows/     # GitHub Actions 部署配置
+│   └── deploy.yml
+├── .env.example           # 环境变量示例文件
 ├── package.json
-└── vercel.json            # Vercel 部署配置文件
-13. 给 Cursor 的核心开发指令
-14. 初始化项目: 使用 Vite 创建一个新的 React + Tailwind CSS 项目。
-15. 环境变量: 在项目根目录创建 .env.local 文件，用于存放飞书的 APP_ID, APP_SECRET, TABLE_ID 等敏感信息。
-16. 创建云函数: 在项目根目录创建 api/submit.js 文件。这是我们的后端处理逻辑。
-17. 云函数逻辑 (api/submit.js):
-18. a. 获取飞书 Tenant Access Token: 函数首先需要根据 APP_ID 和 APP_SECRET 获取操作飞书 API 的凭证。
+└── vite.config.js         # Vite 构建配置
+
+### 后端函数结构（部署至火山引擎）
+vefaas-functions/
+├── submit-order/          # 单个订单提交函数
+│   ├── index.js
+│   └── package.json
+├── submit-order-batch/    # 批量订单提交函数
+│   ├── index.js
+│   └── package.json
+├── upload-batch/          # 批量文件上传函数
+│   ├── index.js
+│   └── package.json
+└── recommendations/       # 推荐数据获取函数
+    ├── index.js
+    └── package.json
+13. 核心开发指令（火山引擎架构）
+14. 前端项目: 继续使用现有的 React + Vite + Tailwind CSS 项目，适配新的 API 调用方式。
+15. 环境变量: 更新前端环境变量配置，设置火山引擎 API 网关地址。
+16. 创建火山引擎函数: 将现有的 api/ 目录下的函数迁移到火山引擎函数服务。
+17. 函数逻辑适配:
+18. a. 函数入口适配: 使用火山引擎函数的标准入口格式 `function handler(ctx, event)`。
 19. b. 处理请求: 解析从前端发来的 multipart/form-data 请求，分离出文本字段和文件。
-20. c. 上传图片: 遍历所有图片文件，调用飞书的上传附件 API (/open-apis/drive/v1/medias/upload_all)，获取 file_token。
-21. d. 组装数据: 按照 第 4 节 的格式，将文本字段和 file_token 组装成最终的 JSON payload。
-22. e. 写入表格: 调用飞书的新增记录 API (/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records)，将 payload 写入表格。
-23. f. 返回响应: 向前端返回成功或失败的信息。
-24. 前端提交逻辑:
-  - 修改 handleSubmit 函数。
-  - 使用 new FormData() 来创建一个表单数据对象。
-  - 将所有文本字段和图片文件 append 到这个 FormData 对象中。
-  - 使用 fetch 函数，向我们自己的后端端点 /api/submit 发送这个 FormData 对象。
-  - 根据返回结果，进行页面跳转或错误提示。
+20. c. 上传图片: 遍历所有图片文件，调用飞书的上传附件 API，获取 file_token。
+21. d. 组装数据: 按照既定格式，将文本字段和 file_token 组装成最终的 JSON payload。
+22. e. 写入表格: 调用飞书的新增记录 API，将 payload 写入表格。
+23. f. 返回响应: 向前端返回成功或失败的信息，包含正确的 CORS 头部。
+24. 前端 API 调用适配:
+  - 更新 API 基础 URL 为火山引擎 API 网关地址。
+  - 保持现有的 FormData 提交逻辑不变。
+  - 使用完整的 URL 路径调用后端 API。
+  - 确保错误处理和用户反馈机制正常工作。
 核心开发者文档链接列表：
 1. 前端框架与样式
 - React 官方文档:
@@ -134,9 +155,15 @@ pawsomeart-app/
   - https://tailwindcss.com/docs/
   - 用途: 用于快速构建应用的样式和布局。
 2. 部署与云函数
-- Vercel Serverless Functions 文档:
-  - https://vercel.com/docs/functions/serverless-functions
-  - 用途: 这是关于如何创建 api/submit.js 这个云函数的官方指南，是项目的后端核心。
+- 火山引擎函数服务 (veFaaS) 文档:
+  - https://www.volcengine.com/docs/6662/
+  - 用途: 火山引擎函数服务的官方文档，用于创建和部署后端函数。
+- GitHub Pages 部署文档:
+  - https://docs.github.com/en/pages
+  - 用途: 前端静态资源部署到 GitHub Pages 的官方指南。
+- GitHub Actions 文档:
+  - https://docs.github.com/en/actions
+  - 用途: 配置自动化部署流程的官方文档。
 3. 飞书开放平台 API (最关键的部分)
 你需要把这些链接清晰地指向给 Cursor，因为它需要调用这些 API 来完成数据写入。
 - 获取 Tenant Access Token (调用凭证):
