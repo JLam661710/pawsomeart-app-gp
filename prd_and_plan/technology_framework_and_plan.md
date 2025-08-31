@@ -1,26 +1,51 @@
-PawsomeArt 定制应用技术选型与框架设计文档 (飞书直传方案)
-暂时无法在飞书文档外展示此内容
-1. 文档概述
-1.1. 项目目标
-本文档为 PawsomeArt 定制应用的开发提供最终技术指导。项目目标是构建一个轻量级移动端网页应用。其核心功能是收集用户的定制需求，并通过一个轻量级云函数作为中转，将包含图片附件的完整数据写入指定的飞书多维表格中。
-1.2. 核心原则
-- 最佳体验: 优先保证运营团队在飞书表格中能直接预览图片，优化工作流。
-- 轻量后端: 采用 Serverless 云函数处理数据和文件上传，无需管理传统服务器。
-- 开发简洁: 技术选型以简化开发、快速部署为最高优先级。
-2. 技术栈选型
-暂时无法在飞书文档外展示此内容
-3. 应用架构与数据流
-本应用采用“前端 + 轻量后端”架构，数据流清晰高效：
-1. 用户访问: 用户在微信中扫码，打开部署在 Vercel 上的 React 应用。
-2. 前端交互: 用户在应用中填写表单，选择并上传图片。
-3. 数据打包 (前端): 用户点击提交按钮时，前端将所有文本数据和图片文件打包成一个 FormData 对象。
-4. 提交到云函数 (前端): 前端使用 fetch API，将 FormData 对象发送到我们部署在 Vercel 上的 Serverless Function 端点（例如 /api/submit）。
-5. 云函数处理 (后端): 这是关键的自动化处理步骤：
-6. a. 云函数接收到前端发来的数据。
-7. b. 第一步 - 上传图片: 云函数调用飞书的**“上传附件”API**，将图片文件逐个上传到飞书的服务器，并从飞书获取每张图片的 file_token（图片收据）。
-8. c. 第二步 - 写入数据: 云函数将收到的文本数据（如手机号、款式）和上一步获取的 file_token 数组，组装成符合飞书**“新增记录”API**要求的 JSON 格式。
-9. d. 第三步 - 完成: 云函数调用飞书的“新增记录”API，将数据写入你的多维表格。飞书会根据 file_token 自动在表格的附件列中显示图片。
-10. 流程结束: 云函数向前端返回成功信息，前端随即跳转到最终的引流页面。
+# PawsomeArt 定制应用技术选型与框架设计
+
+## 项目概述
+
+PawsomeArt 定制应用是一个轻量化的移动端网页应用，采用现代化的前后端分离架构。前端部署在GitHub Pages上，后端采用火山引擎函数服务，通过飞书多维表格作为数据存储后端，实现完整的订单管理和文件上传功能。
+
+## 核心设计原则
+
+1. **前端体验保持**: 完全保持现有的页面、布局、用户体验和视觉元素
+2. **云原生架构**: 采用火山引擎函数服务，实现高可用、弹性扩展的后端服务
+3. **静态部署**: 前端部署在GitHub Pages，降低部署成本，提高访问速度
+4. **API层重构**: 重新设计API调用层，提升代码质量和可维护性
+## 技术栈选型
+
+### 前端技术栈
+- **框架**: React 18 + Vite
+- **样式**: Tailwind CSS
+- **状态管理**: React Hooks
+- **HTTP客户端**: Axios
+- **部署平台**: GitHub Pages
+
+### 后端技术栈
+- **函数服务**: 火山引擎函数服务 (Volcengine Function Service)
+- **运行时**: Node.js 18
+- **API网关**: 火山引擎API网关
+- **数据存储**: 飞书多维表格
+- **文件存储**: 飞书云文档
+
+## 整体架构设计
+
+### 架构模式: "前后端分离 + 云原生"
+
+- **前端**: React + Vite 构建的单页应用，部署在 GitHub Pages
+- **后端**: 火山引擎函数服务 (Volcengine Function Service)，提供RESTful API
+- **数据存储**: 飞书多维表格 (Bitable)
+- **文件存储**: 飞书云文档
+- **API网关**: 火山引擎API网关，处理跨域和路由
+
+### 数据流程
+
+1. **用户交互**: 用户在前端填写表单并上传图片
+2. **API调用**: 前端通过统一的API服务层调用后端接口
+3. **函数处理**: 火山引擎函数服务处理请求：
+   - 解析表单数据和文件
+   - 上传图片到飞书，获取 `file_token`
+   - 将文本数据和 `file_token` 写入飞书多维表格
+4. **响应返回**: 函数服务返回处理结果给前端
+5. **错误处理**: 统一的错误处理和重试机制
 11. 飞书多维表格数据结构 (增强版)
 为确保数据能被正确、完整、结构化地接收，从而支持后续高效的运营和自动化流程，我们推荐采用以下经过优化的飞书多维表格列（字段）设计。
 
@@ -88,63 +113,125 @@ PawsomeArt 定制应用技术选型与框架设计文档 (飞书直传方案)
   }
 }
 ```
-12. 项目文件夹结构
-此结构适用于 Vercel 平台，前端和云函数代码在同一个项目中。
-pawsomeart-app/
-├── api/                   # 存放 Serverless Function 的代码
-│   └── submit.js          # 核心处理逻辑就在这个文件里
+## 项目文件夹结构
+
+### 前端项目结构 (GitHub Pages)
+```
+pawsomeart-frontend/
 ├── public/                # 静态资源
 ├── src/
 │   ├── assets/            # 存放所有静态图片资源
 │   ├── components/        # 可复用的 UI 组件
 │   ├── constants/         # 存放常量
 │   ├── pages/             # 页面级组件
+│   ├── services/          # API服务层
+│   │   ├── api.js         # 统一的API调用封装
+│   │   └── feishu.js      # 飞书相关API
 │   ├── utils/             # 工具函数
 │   ├── App.jsx
 │   └── main.jsx
-├── .env.local             # 环境变量文件
+├── .env.production        # 生产环境变量
 ├── package.json
-└── vercel.json            # Vercel 部署配置文件
-13. 给 Cursor 的核心开发指令
-14. 初始化项目: 使用 Vite 创建一个新的 React + Tailwind CSS 项目。
-15. 环境变量: 在项目根目录创建 .env.local 文件，用于存放飞书的 APP_ID, APP_SECRET, TABLE_ID 等敏感信息。
-16. 创建云函数: 在项目根目录创建 api/submit.js 文件。这是我们的后端处理逻辑。
-17. 云函数逻辑 (api/submit.js):
-18. a. 获取飞书 Tenant Access Token: 函数首先需要根据 APP_ID 和 APP_SECRET 获取操作飞书 API 的凭证。
-19. b. 处理请求: 解析从前端发来的 multipart/form-data 请求，分离出文本字段和文件。
-20. c. 上传图片: 遍历所有图片文件，调用飞书的上传附件 API (/open-apis/drive/v1/medias/upload_all)，获取 file_token。
-21. d. 组装数据: 按照 第 4 节 的格式，将文本字段和 file_token 组装成最终的 JSON payload。
-22. e. 写入表格: 调用飞书的新增记录 API (/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records)，将 payload 写入表格。
-23. f. 返回响应: 向前端返回成功或失败的信息。
-24. 前端提交逻辑:
-  - 修改 handleSubmit 函数。
-  - 使用 new FormData() 来创建一个表单数据对象。
-  - 将所有文本字段和图片文件 append 到这个 FormData 对象中。
-  - 使用 fetch 函数，向我们自己的后端端点 /api/submit 发送这个 FormData 对象。
-  - 根据返回结果，进行页面跳转或错误提示。
-核心开发者文档链接列表：
-1. 前端框架与样式
-- React 官方文档:
-  - https://react.dev/
-  - 用途: 用于构建整个应用的用户界面。
-- Vite 官方指南:
-  - https://vitejs.dev/guide/
-  - 用途: 项目的构建工具，Cursor 需要用它来初始化和运行项目。
-- Tailwind CSS 官方文档:
-  - https://tailwindcss.com/docs/
-  - 用途: 用于快速构建应用的样式和布局。
-2. 部署与云函数
-- Vercel Serverless Functions 文档:
-  - https://vercel.com/docs/functions/serverless-functions
-  - 用途: 这是关于如何创建 api/submit.js 这个云函数的官方指南，是项目的后端核心。
-3. 飞书开放平台 API (最关键的部分)
-你需要把这些链接清晰地指向给 Cursor，因为它需要调用这些 API 来完成数据写入。
-- 获取 Tenant Access Token (调用凭证):
-  - https://open.feishu.cn/document/ukTMukTMukTM/ukDNz4SO0MjL5QzM/auth-v3/auth/tenant_access_token_internal
-  - 用途: 这是所有后续操作的第一步，云函数需要先获取这个“令牌”才能和飞书的服务器通信。
-- 上传附件 (上传图片):
-  - https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/drive-v1/media/upload_all
-  - 用途: 云函数会调用这个 API，把用户上传的图片文件发送到飞书，并换取 file_token。
-- 向多维表格中新增一条记录:
-  - https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/bitable-v1/app-table-record/create
-  - 用途: 这是最后一步，云函数将所有文本数据和从上一步获取的 file_token 一起发送到这个 API，从而在你的表格里创建新的一行。
+├── vite.config.js         # Vite配置
+└── .github/
+    └── workflows/
+        └── deploy.yml     # GitHub Actions部署配置
+```
+
+### 后端项目结构 (火山引擎函数服务)
+```
+pawsomeart-backend/
+├── functions/
+│   ├── submit/            # 订单提交函数
+│   │   ├── index.js       # 主处理逻辑
+│   │   ├── package.json
+│   │   └── config.json    # 函数配置
+│   └── upload/            # 文件上传函数
+│       ├── index.js
+│       ├── package.json
+│       └── config.json
+├── shared/                # 共享代码
+│   ├── feishu.js         # 飞书API封装
+│   └── utils.js          # 工具函数
+└── deploy.yml            # 部署配置
+```
+## 核心开发指令
+
+### 前端开发步骤
+
+1. **初始化项目**: 使用 Vite 创建新的 React + Tailwind CSS 项目
+2. **环境配置**: 配置 `.env.production` 文件，设置火山引擎函数服务的API端点
+3. **API服务层**: 创建统一的API调用封装，支持错误处理和重试机制
+4. **GitHub Actions**: 配置自动化部署到GitHub Pages
+
+### 后端开发步骤
+
+1. **函数服务初始化**: 在火山引擎控制台创建函数服务项目
+2. **订单提交函数** (`functions/submit/index.js`):
+   - 获取飞书 Tenant Access Token
+   - 解析 multipart/form-data 请求
+   - 上传图片到飞书，获取 file_token
+   - 组装数据并写入飞书多维表格
+   - 返回处理结果
+
+3. **文件上传函数** (`functions/upload/index.js`):
+   - 处理大文件上传
+   - 支持分片上传
+   - 返回上传进度
+
+4. **API网关配置**: 配置跨域策略和路由规则
+
+### 前端API调用逻辑
+
+```javascript
+// services/api.js
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: process.env.VITE_API_BASE_URL,
+  timeout: 30000,
+});
+
+// 订单提交
+export const submitOrder = async (formData) => {
+  const response = await api.post('/submit', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+```
+## 核心开发者文档链接
+
+### 前端框架与样式
+- **React 官方文档**: https://react.dev/
+  - 用途: 构建用户界面的核心框架
+- **Vite 官方指南**: https://vitejs.dev/guide/
+  - 用途: 项目构建工具和开发服务器
+- **Tailwind CSS 官方文档**: https://tailwindcss.com/docs/
+  - 用途: CSS框架，用于快速构建样式
+
+### 部署与云服务
+- **GitHub Pages 部署指南**: https://docs.github.com/en/pages
+  - 用途: 前端静态网站部署平台
+- **GitHub Actions 文档**: https://docs.github.com/en/actions
+  - 用途: 自动化CI/CD流程
+- **火山引擎函数服务文档**: https://www.volcengine.com/docs/6459
+  - 用途: 后端Serverless函数服务，项目的核心后端架构
+- **火山引擎API网关文档**: https://www.volcengine.com/docs/6462
+  - 用途: API网关配置，处理跨域和路由
+
+### 飞书开放平台 API
+- **获取 Tenant Access Token**: https://open.feishu.cn/document/ukTMukTMukTM/ukDNz4SO0MjL5QzM/auth-v3/auth/tenant_access_token_internal
+  - 用途: 获取飞书API调用凭证
+- **上传附件 API**: https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/drive-v1/media/upload_all
+  - 用途: 上传图片文件到飞书，获取file_token
+- **新增记录 API**: https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/bitable-v1/app-table-record/create
+  - 用途: 向飞书多维表格添加新记录
+
+### 开发工具
+- **Axios 文档**: https://axios-http.com/docs/intro
+  - 用途: HTTP客户端，用于API调用
+- **Node.js 官方文档**: https://nodejs.org/docs/
+  - 用途: 后端函数运行时环境

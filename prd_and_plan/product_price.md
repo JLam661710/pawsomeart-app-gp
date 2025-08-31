@@ -1,3 +1,16 @@
+# PawsomeArt 产品定价体系
+
+## 技术架构集成说明 (V2.0 更新)
+
+本定价体系已完全适配新的技术架构：
+- **价格计算引擎**: 部署在火山引擎函数服务，支持实时价格计算
+- **数据存储**: 价格数据存储在Feishu Bitable，支持动态更新
+- **前端展示**: 通过GitHub Pages部署，确保价格信息快速加载
+- **API集成**: 统一的价格查询API，支持批量价格计算
+
+## 产品定价明细
+
+### 全新艺术创作系列-经典定制款
 全新艺术创作系列-经典定制款 单宠 8 寸 ：328元
 全新艺术创作系列-经典定制款 单宠 A4 ：358元
 全新艺术创作系列-经典定制款 单宠大尺寸 ：1380+元
@@ -30,3 +43,65 @@
 参考照片创作系列-姿态保留款 双宠大尺寸 ：1380+元
 参考照片创作系列-姿态保留款 多宠大尺寸 ：1380+元
 （多宠大尺寸的价格统一在出图之后和向用户反馈时具体报价，前期在页面先只显示一个起始价）
+
+## API接口规范 (V2.0 新增)
+
+### 价格查询API
+```
+GET /api/price/calculate
+Parameters:
+- style: 画像风格 (classic, masterpiece, scene_recreation, pose_recreation)
+- petCount: 宠物数量 (1, 2, 3+)
+- size: 尺寸规格 (8inch, A4, large)
+
+Response:
+{
+  "success": true,
+  "data": {
+    "basePrice": 328,
+    "finalPrice": 328,
+    "currency": "CNY",
+    "priceBreakdown": {
+      "stylePrice": 300,
+      "sizePrice": 28,
+      "petCountPrice": 0
+    }
+  },
+  "timestamp": "2024-01-01T00:00:00Z",
+  "apiVersion": "v2.0"
+}
+```
+
+### 批量价格查询API
+```
+POST /api/price/batch-calculate
+Body:
+{
+  "requests": [
+    {
+      "style": "classic",
+      "petCount": 1,
+      "size": "8inch"
+    },
+    {
+      "style": "masterpiece",
+      "petCount": 2,
+      "size": "A4"
+    }
+  ]
+}
+```
+
+## 技术实现细节
+
+### 价格计算逻辑
+1. **基础价格矩阵**: 存储在Feishu Bitable中，支持动态更新
+2. **计算引擎**: 火山引擎函数服务实现，支持复杂定价规则
+3. **缓存策略**: Redis缓存常用价格组合，提升响应速度
+4. **实时更新**: 支持价格策略的实时调整和生效
+
+### 前端集成
+1. **价格显示**: 实时计算并显示当前选择的价格
+2. **价格动画**: 价格变化时的平滑过渡效果
+3. **错误处理**: 价格计算失败时的降级显示
+4. **离线支持**: 本地缓存基础价格信息
