@@ -144,6 +144,8 @@ Content-Type: multipart/form-data
   - https://your-frontend-domain.com
   - https://localhost:3000 (开发环境)
   - https://127.0.0.1:3000 (开发环境)
+  - https://jlam661710.github.io (GitHub Pages 主域名)
+  - https://jlam661710.github.io/pawsomeart-app-gp (GitHub Pages 项目域名)
 
 允许的方法: POST, OPTIONS
 允许的头部: 
