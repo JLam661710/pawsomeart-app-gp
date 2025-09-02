@@ -48,8 +48,8 @@ export const handler = async (event, context) => {
     const contentType = headers['content-type'] || headers['Content-Type'] || '';
     const isMultipart = contentType.includes('multipart/form-data');
     
-    let fileInfo = [];
-    let formFields = {};
+    const fileInfo = [];
+    const formFields = {};
     
     if (isMultipart && body) {
       try {

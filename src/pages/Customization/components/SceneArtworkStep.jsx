@@ -2,21 +2,77 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Upload, X, Palette, Camera, Sparkles } from 'lucide-react';
 import { compressImage } from '../../../utils/imageCompression';
 
-// 兜底推荐数据（精简版）
-const FALLBACK_SCENES = {
+// 完整的场景推荐数据（硬编码）
+const SCENE_RECOMMENDATIONS = {
   1: [
     { id: 1, name: 'A-ColorfulExpressionism-1', image: '/pictures/ArtworkToBeBackgroundRecommended/A-ColorfulExpressionism-1.png', description: '色彩鲜艳的表达主义风格' },
-    { id: 4, name: 'B-ModernPaintingsWithSharpColorsAndBrushes-1', image: '/pictures/ArtworkToBeBackgroundRecommended/B-ModernPaintingsWithSharpColorsAndBrushes-1.jpeg', description: '现代画作' }
+    { id: 2, name: 'A-ColorfulExpressionism-2', image: '/pictures/ArtworkToBeBackgroundRecommended/A-ColorfulExpressionism-2.jpeg', description: '色彩鲜艳的表达主义风格' },
+    { id: 3, name: 'A-ColorfulExpressionism-3', image: '/pictures/ArtworkToBeBackgroundRecommended/A-ColorfulExpressionism-3.png', description: '色彩鲜艳的表达主义风格' },
+    { id: 4, name: 'B-ModernPaintingsWithSharpColorsAndBrushes-1', image: '/pictures/ArtworkToBeBackgroundRecommended/B-ModernPaintingsWithSharpColorsAndBrushes-1.jpeg', description: '现代画作' },
+    { id: 5, name: 'C-SmoothAndEye-catchingDecorativeImages-1', image: '/pictures/ArtworkToBeBackgroundRecommended/C-SmoothAndEye-catchingDecorativeImages-1.png', description: '平滑且引人注目的装饰图像' },
+    { id: 6, name: 'D-ImpressionistLandscape-1', image: '/pictures/ArtworkToBeBackgroundRecommended/D-ImpressionistLandscape-1.jpg', description: '印象派风景' },
+    { id: 7, name: 'D-ImpressionistLandscape-2', image: '/pictures/ArtworkToBeBackgroundRecommended/D-ImpressionistLandscape-2.jpg', description: '印象派风景' },
+    { id: 8, name: 'D-ImpressionistLandscape-3', image: '/pictures/ArtworkToBeBackgroundRecommended/D-ImpressionistLandscape-3.png', description: '印象派风景' },
+    { id: 9, name: 'E-PointillismBrushstrokeAndColor-1', image: '/pictures/ArtworkToBeBackgroundRecommended/E-PointillismBrushstrokeAndColor-1.jpg', description: '点画派笔触与色彩' },
+    { id: 10, name: 'E-PointillismBrushstrokeAndColor-2', image: '/pictures/ArtworkToBeBackgroundRecommended/E-PointillismBrushstrokeAndColor-2.png', description: '点画派笔触与色彩' },
+    { id: 11, name: 'F-ThePurpleImpression-1', image: '/pictures/ArtworkToBeBackgroundRecommended/F-ThePurpleImpression-1.png', description: '紫色印象' },
+    { id: 12, name: 'G-TheImpressionOfAVastAndShallowPlace-1', image: '/pictures/ArtworkToBeBackgroundRecommended/G-TheImpressionOfAVastAndShallowPlace-1.png', description: '广阔浅滩的印象' },
+    { id: 13, name: 'H-AbstractLinesAndShapes-1', image: '/pictures/ArtworkToBeBackgroundRecommended/H-AbstractLinesAndShapes-1.png', description: '抽象线条与形状' },
+    { id: 14, name: 'H-AbstractLinesAndShapes-2', image: '/pictures/ArtworkToBeBackgroundRecommended/H-AbstractLinesAndShapes-2.png', description: '抽象线条与形状' },
+    { id: 15, name: 'H-AbstractLinesAndShapes-3', image: '/pictures/ArtworkToBeBackgroundRecommended/H-AbstractLinesAndShapes-3.png', description: '抽象线条与形状' }
   ],
   3: [
-    { id: 1, name: 'D-ImpressionistLandscape-2', image: '/pictures/ArtworkToBeBackgroundRecommended/D-ImpressionistLandscape-2.jpg', description: '印象派风景' },
-    { id: 3, name: 'E-PointillismBrushstrokeAndColor-1', image: '/pictures/ArtworkToBeBackgroundRecommended/E-PointillismBrushstrokeAndColor-1.jpg', description: '点画派' }
+    { id: 16, name: 'A-ColorfulExpressionism-1', image: '/pictures/ArtworkToBeBackgroundRecommended/A-ColorfulExpressionism-1.png', description: '色彩鲜艳的表达主义风格' },
+    { id: 17, name: 'A-ColorfulExpressionism-2', image: '/pictures/ArtworkToBeBackgroundRecommended/A-ColorfulExpressionism-2.jpeg', description: '色彩鲜艳的表达主义风格' },
+    { id: 18, name: 'A-ColorfulExpressionism-3', image: '/pictures/ArtworkToBeBackgroundRecommended/A-ColorfulExpressionism-3.png', description: '色彩鲜艳的表达主义风格' },
+    { id: 19, name: 'B-ModernPaintingsWithSharpColorsAndBrushes-1', image: '/pictures/ArtworkToBeBackgroundRecommended/B-ModernPaintingsWithSharpColorsAndBrushes-1.jpeg', description: '现代画作' },
+    { id: 20, name: 'C-SmoothAndEye-catchingDecorativeImages-1', image: '/pictures/ArtworkToBeBackgroundRecommended/C-SmoothAndEye-catchingDecorativeImages-1.png', description: '平滑且引人注目的装饰图像' },
+    { id: 21, name: 'D-ImpressionistLandscape-1', image: '/pictures/ArtworkToBeBackgroundRecommended/D-ImpressionistLandscape-1.jpg', description: '印象派风景' },
+    { id: 22, name: 'D-ImpressionistLandscape-2', image: '/pictures/ArtworkToBeBackgroundRecommended/D-ImpressionistLandscape-2.jpg', description: '印象派风景' },
+    { id: 23, name: 'D-ImpressionistLandscape-3', image: '/pictures/ArtworkToBeBackgroundRecommended/D-ImpressionistLandscape-3.png', description: '印象派风景' },
+    { id: 24, name: 'E-PointillismBrushstrokeAndColor-1', image: '/pictures/ArtworkToBeBackgroundRecommended/E-PointillismBrushstrokeAndColor-1.jpg', description: '点画派笔触与色彩' },
+    { id: 25, name: 'E-PointillismBrushstrokeAndColor-2', image: '/pictures/ArtworkToBeBackgroundRecommended/E-PointillismBrushstrokeAndColor-2.png', description: '点画派笔触与色彩' },
+    { id: 26, name: 'F-ThePurpleImpression-1', image: '/pictures/ArtworkToBeBackgroundRecommended/F-ThePurpleImpression-1.png', description: '紫色印象' },
+    { id: 27, name: 'G-TheImpressionOfAVastAndShallowPlace-1', image: '/pictures/ArtworkToBeBackgroundRecommended/G-TheImpressionOfAVastAndShallowPlace-1.png', description: '广阔浅滩的印象' },
+    { id: 28, name: 'H-AbstractLinesAndShapes-1', image: '/pictures/ArtworkToBeBackgroundRecommended/H-AbstractLinesAndShapes-1.png', description: '抽象线条与形状' },
+    { id: 29, name: 'H-AbstractLinesAndShapes-2', image: '/pictures/ArtworkToBeBackgroundRecommended/H-AbstractLinesAndShapes-2.png', description: '抽象线条与形状' },
+    { id: 30, name: 'H-AbstractLinesAndShapes-3', image: '/pictures/ArtworkToBeBackgroundRecommended/H-AbstractLinesAndShapes-3.png', description: '抽象线条与形状' }
   ]
 };
 
-const FALLBACK_ARTWORKS = [
+// 完整的艺术作品推荐数据（硬编码）
+const ARTWORK_RECOMMENDATIONS = [
+  { id: 1, name: 'Berthe Morisot with a Bouquet of Violets-Edouard Manet', artist: 'Edouard Manet', image: '/pictures/FamousArtPortraitsRecommended/Berthe Morisot with a Bouquet of Violets-Edouard Manet.png', description: '贝尔特·莫里索与紫罗兰花束' },
   { id: 2, name: 'Girl with a Pearl Earring-Johannes Vermeer', artist: 'Johannes Vermeer', image: '/pictures/FamousArtPortraitsRecommended/Girl with a Pearl Earring-Johannes Vermeer.png', description: '戴珍珠耳环的少女' },
-  { id: 4, name: 'Lady with an Ermine-Leonardo da Vinci', artist: 'Leonardo da Vinci', image: '/pictures/FamousArtPortraitsRecommended/Lady with an Ermine-Leonardo da Vinci.png', description: '抱银鼠的女子' }
+  { id: 3, name: 'La Primevere et La Plume-Alphonse Mucha', artist: 'Alphonse Mucha', image: '/pictures/FamousArtPortraitsRecommended/La Primevere et La Plume-Alphonse Mucha.png', description: '报春花与羽毛' },
+  { id: 4, name: 'Lady with an Ermine-Leonardo da Vinci', artist: 'Leonardo da Vinci', image: '/pictures/FamousArtPortraitsRecommended/Lady with an Ermine-Leonardo da Vinci.png', description: '抱银鼠的女子' },
+  { id: 5, name: 'Marchesa Brigida Spinola Doria-Peter Paul Rubens', artist: 'Peter Paul Rubens', image: '/pictures/FamousArtPortraitsRecommended/Marchesa Brigida Spinola Doria-Peter Paul Rubens.png', description: '布里吉达·斯皮诺拉·多里亚侯爵夫人' },
+  { id: 6, name: 'Portrait Fritz Ridler-Klimt Gustav', artist: 'Gustav Klimt', image: '/pictures/FamousArtPortraitsRecommended/Portrait Fritz Ridler-Klimt Gustav.png', description: '弗里茨·里德勒肖像' },
+  { id: 7, name: 'Portrait of Armand Roulin-Vincent van Gogh', artist: 'Vincent van Gogh', image: '/pictures/FamousArtPortraitsRecommended/Portrait of Armand Roulin-Vincent van Gogh.png', description: '阿尔芒·鲁林肖像' },
+  { id: 8, name: 'Portrait of Josette Gris-Juan Gris', artist: 'Juan Gris', image: '/pictures/FamousArtPortraitsRecommended/Portrait of Josette Gris-Juan Gris.png', description: '约塞特·格里斯肖像' },
+  { id: 9, name: 'Portrait of Madame Matisse. The Green Line-Henri Matisse', artist: 'Henri Matisse', image: '/pictures/FamousArtPortraitsRecommended/Portrait of Madame Matisse. The Green Line-Henri Matisse.png', description: '马蒂斯夫人肖像·绿线' },
+  { id: 10, name: 'Portrait of Pablo Picasso-Juan Gris', artist: 'Juan Gris', image: '/pictures/FamousArtPortraitsRecommended/Portrait of Pablo Picasso-Juan Gris.png', description: '巴勃罗·毕加索肖像' },
+  { id: 11, name: 'Portrait of Wally-Egon Schiele', artist: 'Egon Schiele', image: '/pictures/FamousArtPortraitsRecommended/Portrait of Wally-Egon Schiele.png', description: '瓦利肖像' },
+  { id: 12, name: 'Portrait of William I King of the Netherlands-Joseph Paelinck', artist: 'Joseph Paelinck', image: '/pictures/FamousArtPortraitsRecommended/Portrait of William I King of the Netherlands-Joseph Paelinck.png', description: '荷兰国王威廉一世肖像' },
+  { id: 13, name: 'Samuel F. B. Morse Self-Portrait-Samuel F. B. Morse', artist: 'Samuel F. B. Morse', image: '/pictures/FamousArtPortraitsRecommended/Samuel F. B. Morse Self-Portrait-Samuel F. B. Morse.png', description: '塞缪尔·莫尔斯自画像' },
+  { id: 14, name: 'Seated Woman-Juan Gris', artist: 'Juan Gris', image: '/pictures/FamousArtPortraitsRecommended/Seated Woman-Juan Gris.png', description: '坐着的女人' },
+  { id: 15, name: 'Self Portrait in a Straw Hat- Elisabeth Vigee Le Brun', artist: 'Elisabeth Vigee Le Brun', image: '/pictures/FamousArtPortraitsRecommended/Self Portrait in a Straw Hat- Elisabeth Vigee Le Brun.png', description: '戴草帽的自画像' },
+  { id: 16, name: 'Self-Portrait 1-Vincent van Gogh', artist: 'Vincent van Gogh', image: '/pictures/FamousArtPortraitsRecommended/Self-Portrait 1-Vincent van Gogh.png', description: '自画像1' },
+  { id: 17, name: 'Self-Portrait 2-Vincent van Gogh', artist: 'Vincent van Gogh', image: '/pictures/FamousArtPortraitsRecommended/Self-Portrait 2-Vincent van Gogh.png', description: '自画像2' },
+  { id: 18, name: 'Self-Portrait 3-Vincent van Gogh', artist: 'Vincent van Gogh', image: '/pictures/FamousArtPortraitsRecommended/Self-Portrait 3-Vincent van Gogh.png', description: '自画像3' },
+  { id: 19, name: 'Self-Portrait with Chinese Lantern Plant-Egon Schiele', artist: 'Egon Schiele', image: '/pictures/FamousArtPortraitsRecommended/Self-Portrait with Chinese Lantern Plant-Egon Schiele.png', description: '与酸浆植物的自画像' },
+  { id: 20, name: 'Self-Portrait with Grey Felt Hat-Vincent van Gogh ', artist: 'Vincent van Gogh', image: '/pictures/FamousArtPortraitsRecommended/Self-Portrait with Grey Felt Hat-Vincent van Gogh .png', description: '戴灰色毡帽的自画像' },
+  { id: 21, name: 'Self-Portrait-Paul Gauguin', artist: 'Paul Gauguin', image: '/pictures/FamousArtPortraitsRecommended/Self-Portrait-Paul Gauguin.png', description: '自画像' },
+  { id: 22, name: 'Self-portrait Dedicated to Leon Trotsky-Frida Kahlo', artist: 'Frida Kahlo', image: '/pictures/FamousArtPortraitsRecommended/Self-portrait Dedicated to Leon Trotsky-Frida Kahlo.png', description: '献给列昂·托洛茨基的自画像' },
+  { id: 23, name: 'Self-portrait as the Allegory of Painting-Artemisia Gentileschi', artist: 'Artemisia Gentileschi', image: '/pictures/FamousArtPortraitsRecommended/Self-portrait as the Allegory of Painting-Artemisia Gentileschi.png', description: '作为绘画寓言的自画像' },
+  { id: 24, name: 'Self-portrait wearing a velvet dress-Frida Kahlo', artist: 'Frida Kahlo', image: '/pictures/FamousArtPortraitsRecommended/Self-portrait wearing a velvet dress-Frida Kahlo.png', description: '穿天鹅绒裙子的自画像' },
+  { id: 25, name: 'Self-portrait-Frida Kahlo', artist: 'Frida Kahlo', image: '/pictures/FamousArtPortraitsRecommended/Self-portrait-Frida Kahlo.png', description: '自画像' },
+  { id: 26, name: 'Self-portrait-Rembrandt', artist: 'Rembrandt', image: '/pictures/FamousArtPortraitsRecommended/Self-portrait-Rembrandt.png', description: '自画像' },
+  { id: 27, name: 'The Lady of the Camellias-Alphonse Mucha', artist: 'Alphonse Mucha', image: '/pictures/FamousArtPortraitsRecommended/The Lady of the Camellias-Alphonse Mucha.png', description: '茶花女' },
+  { id: 28, name: 'The Lady with the Veil (the Artist\'s Wife)-Alexander Roslin', artist: 'Alexander Roslin', image: '/pictures/FamousArtPortraitsRecommended/The Lady with the Veil (the Artist\'s Wife)-Alexander Roslin.png', description: '戴面纱的女士（艺术家的妻子）' },
+  { id: 29, name: 'The Red Boy-Sir Thomas Lawrence', artist: 'Sir Thomas Lawrence', image: '/pictures/FamousArtPortraitsRecommended/The Red Boy-Sir Thomas Lawrence.png', description: '红衣男孩' },
+  { id: 30, name: 'Woman with a Parasol – Madame Monet and Her Son-Claude Monet ', artist: 'Claude Monet', image: '/pictures/FamousArtPortraitsRecommended/Woman with a Parasol – Madame Monet and Her Son-Claude Monet .png', description: '撑阳伞的女人——莫奈夫人和她的儿子' },
+  { id: 31, name: 'Zodiac-Alphonse Mucha', artist: 'Alphonse Mucha', image: '/pictures/FamousArtPortraitsRecommended/Zodiac-Alphonse Mucha.png', description: '黄道十二宫' }
 ];
 
 const SceneArtworkStep = ({ product, data, onNext, onPrev }) => {
@@ -30,36 +86,13 @@ const SceneArtworkStep = ({ product, data, onNext, onPrev }) => {
   const isArtworkProduct = product.id === 2; // 名画致敬款
 
   useEffect(() => {
-    const fetchRecommendations = async () => {
-      try {
-        const type = isArtworkProduct ? 'artworks' : 'scenes';
-        const productId = product.id;
-        const response = await fetch(`/api/recommendations?type=${type}&productId=${productId}`);
-        if (response.ok) {
-          const data = await response.json();
-          setRecommendations(data);
-        } else {
-          console.error('Failed to fetch recommendations');
-          // 使用兜底
-          if (isArtworkProduct) {
-            setRecommendations(FALLBACK_ARTWORKS);
-          } else {
-            setRecommendations(FALLBACK_SCENES[productId] || []);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching recommendations:', error);
-        // 使用兜底
-        if (isArtworkProduct) {
-          setRecommendations(FALLBACK_ARTWORKS);
-        } else {
-          setRecommendations(FALLBACK_SCENES[product.id] || []);
-        }
-      }
-    };
-
     if (selectionMethod === 'recommendation') {
-      fetchRecommendations();
+      // 直接使用硬编码的推荐数据
+      if (isArtworkProduct) {
+        setRecommendations(ARTWORK_RECOMMENDATIONS);
+      } else {
+        setRecommendations(SCENE_RECOMMENDATIONS[product.id] || []);
+      }
     }
   }, [selectionMethod, isArtworkProduct, product.id]);
 

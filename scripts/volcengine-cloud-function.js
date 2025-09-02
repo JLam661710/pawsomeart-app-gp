@@ -77,8 +77,8 @@ export const handler = async (event, context) => {
     });
     
     // 解析 multipart/form-data（简化版本）
-    let fileInfo = [];
-    let formFields = {};
+    const fileInfo = [];
+    const formFields = {};
     let parseError = null;
     
     if (isMultipart && actualBody) {

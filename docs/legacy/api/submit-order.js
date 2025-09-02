@@ -362,11 +362,11 @@ async function handler(req, res) {
         // 增强手机号验证 - 支持多地区号码格式
         const validatePhone = (phone) => {
             // 移除所有空格、连字符和括号
-            const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+            const cleanPhone = phone.replace(/[\s\-()]/g, '');
             
             // 基本格式检查: 至少7位数字，最多20位（包含国家代码）
             // 这个宽松的验证可以覆盖大部分合理的电话号码格式
-            const basicFormatRegex = /^[\+]?\d{7,20}$/;
+            const basicFormatRegex = /^[+]?\d{7,20}$/;
             
             // 如果基本格式通过，就认为是有效的
             if (basicFormatRegex.test(cleanPhone)) {
@@ -540,7 +540,7 @@ async function handler(req, res) {
         console.error('Error submitting order:', error);
         
         // 根据错误类型返回不同的错误信息
-        let errorResponse = {
+        const errorResponse = {
             success: false,
             message: '订单提交失败',
             error: {

@@ -6,12 +6,8 @@ import PhotoUploadStep from './components/PhotoUploadStep';
 import SceneArtworkStep from './components/SceneArtworkStep';
 import OrderConfirmation from './components/OrderConfirmation';
 import ErrorModal from '../../components/ErrorModal/ErrorModal';
-import {
-  shouldUseBatchUpload,
-  executeBatchUpload,
-  submitBatchOrder,
-  traditionalUpload
-} from '../../utils/batchUpload';
+import ApiService from '../../services/api.js';
+// 简化的订单提交逻辑 - 适配火山引擎云函数
 
 const Customization = () => {
   const { productId } = useParams();
@@ -27,14 +23,9 @@ const Customization = () => {
     error: null
   });
   
-  // 上传进度状态管理
+  // 简化的上传进度状态管理
   const [uploadProgress, setUploadProgress] = useState({
     isUploading: false,
-    useBatchUpload: false,
-    batchIndex: 0,
-    totalBatches: 0,
-    completedBatches: 0,
-    currentBatchProgress: 0,
     overallProgress: 0
   });
   
@@ -86,71 +77,33 @@ const Customization = () => {
   };
 
   const handleOrderSubmit = async (submitPayload) => {
-    console.log('[Customization] handleOrderSubmit: Starting order submission...');
-    console.log('[Customization] handleOrderSubmit: submitPayload:', submitPayload);
-    console.log('[Customization] handleOrderSubmit: customizationData:', customizationData);
+    console.log('[Customization] 开始统一订单提交流程');
     
-    // 兼容两种入参：1）直接 contactInfo 对象；2）包含 contact 字段的对象
+    // 兼容两种入参格式
     const contactInfo = submitPayload && submitPayload.name && submitPayload.phone
       ? submitPayload
       : (submitPayload && submitPayload.contact) || {};
-  
-    console.log('[Customization] handleOrderSubmit: contactInfo:', contactInfo);
     
     const finalData = { ...customizationData, contactInfo };
-    console.log('[Customization] handleOrderSubmit: finalData:', finalData);
     
     // 设置上传状态
-    setUploadProgress(prev => ({
-      ...prev,
+    setUploadProgress({
       isUploading: true,
       overallProgress: 0
-    }));
+    });
     
     try {
-      // 提取文件
-      const userUploads = finalData.photos?.map(photo => photo.file).filter(file => file instanceof File) || [];
-      const referenceImages = [];
-      if (finalData.uploadedImage instanceof File) {
-        referenceImages.push(finalData.uploadedImage);
-      } else if (finalData.uploadedImage?.file instanceof File) {
-        referenceImages.push(finalData.uploadedImage.file);
-      }
-      
-      console.log('[Customization] 文件统计:', {
-        userUploadsCount: userUploads.length,
-        referenceImagesCount: referenceImages.length,
-        totalFiles: userUploads.length + referenceImages.length
-      });
-      
-      // 判断是否使用分批上传
-      const allFiles = [...userUploads, ...referenceImages];
-      const useBatchUpload = shouldUseBatchUpload(allFiles);
-      
-      setUploadProgress(prev => ({
-        ...prev,
-        useBatchUpload
-      }));
-      
-      console.log(`[Customization] 上传策略: ${useBatchUpload ? '分批上传' : '传统上传'}`);
-      
-      if (useBatchUpload) {
-        // 使用分批上传
-        await handleBatchUpload(userUploads, referenceImages, finalData, contactInfo);
-      } else {
-        // 使用传统上传
-        await handleTraditionalUpload(finalData);
-      }
+      // 使用统一的订单提交逻辑
+      await handleUnifiedUpload(finalData);
       
     } catch (error) {
       console.error('[Customization] 订单提交失败:', error);
       
       // 重置上传状态
-      setUploadProgress(prev => ({
-        ...prev,
+      setUploadProgress({
         isUploading: false,
         overallProgress: 0
-      }));
+      });
       
       // 显示错误信息
       let errorType = 'UPLOAD_ERROR';
@@ -192,129 +145,47 @@ const Customization = () => {
     }
   };
   
-  // 分批上传处理函数
-  const handleBatchUpload = async (userUploads, referenceImages, finalData, contactInfo) => {
-    try {
-      console.log('[Customization] 开始分批上传流程');
-      
-      // 执行分批上传
-      const uploadResult = await executeBatchUpload(
-        userUploads,
-        referenceImages,
-        (progress) => {
-          setUploadProgress(prev => ({
-            ...prev,
-            ...progress
-          }));
-        }
-      );
-      
-      console.log('[Customization] 分批上传完成，开始提交订单');
-      
-      // 准备订单数据
-      const orderData = {
-        phone: contactInfo.phone,
-        email: contactInfo.email,
-        customization_style: product.name,
-        petCount: finalData.petCount,
-        size: finalData.size,
-        price: finalData.price,
-        selectionMethod: finalData.selectionMethod,
-        textDescription: finalData.textDescription,
-        selectedRecommendation: finalData.selectedRecommendation,
-        notes: contactInfo.notes
-      };
-      
-      // 提交分批订单
-      const submitResult = await submitBatchOrder(
-        uploadResult.batchId,
-        uploadResult.userUploads,
-        uploadResult.referenceImages,
-        orderData
-      );
-      
-      // 订单提交成功
-      handleOrderSuccess(submitResult.orderId);
-      
-    } catch (error) {
-      console.warn('[Customization] 分批上传失败，尝试降级到传统上传:', error);
-      
-      // 降级到传统上传
-      setUploadProgress(prev => ({
-        ...prev,
-        useBatchUpload: false,
-        overallProgress: 0
-      }));
-      
-      await handleTraditionalUpload(finalData);
-    }
-  };
-  
-  // 传统上传处理函数
-  const handleTraditionalUpload = async (finalData) => {
-    console.log('[Customization] 使用传统上传方式');
+  // 统一的订单上传处理函数 - 适配火山引擎云函数
+  const handleUnifiedUpload = async (finalData) => {
+    console.log('[Customization] 开始统一上传流程');
     
-    // 使用传统上传工具函数
-    const result = await traditionalUpload(
-      finalData,
-      product,
-      (progress) => {
-        setUploadProgress(prev => ({
-          ...prev,
-          overallProgress: progress
-        }));
-      }
-    );
-    
-    // 订单提交成功
-    handleOrderSuccess(result.orderId);
-  };
-  
-  // 原有的 FormData 构建逻辑（保留作为备用）
-  const buildFormDataLegacy = (finalData) => {
+    // 构建FormData
     const formData = new FormData();
     
-    // 添加用户上传的照片
-    if (finalData.photos && finalData.photos.length > 0) {
-      finalData.photos.forEach((photo, index) => {
-        if (photo.file instanceof File) {
-          formData.append('user_uploads', photo.file);
-          console.log(`[Customization] buildFormDataLegacy: Added user_uploads[${index}]:`, photo.file.name);
-        }
-      });
-    }
-    
-    // 添加联系信息
-    if (finalData.contactInfo?.phone) {
-      formData.append('phone', finalData.contactInfo.phone);
-    }
-    if (finalData.contactInfo?.email) {
-      formData.append('email', finalData.contactInfo.email);
-    }
-    
-    // 添加参考图
-    if (finalData.uploadedImage) {
-      if (finalData.uploadedImage instanceof File) {
-        formData.append('uploadedImage', finalData.uploadedImage);
-      } else if (finalData.uploadedImage.file instanceof File) {
-        formData.append('uploadedImage', finalData.uploadedImage.file);
-      }
-    }
-    
-    // 添加其他定制化数据
+    // 添加基本订单信息
+    formData.append('phone', finalData.contactInfo.phone || '');
+    formData.append('email', finalData.contactInfo.email || '');
     formData.append('customization_style', product.name);
-    formData.append('petCount', finalData.petCount);
-    formData.append('size', finalData.size);
-    formData.append('price', finalData.price);
-    formData.append('selectionMethod', finalData.selectionMethod);
+    formData.append('petCount', finalData.petCount || 1);
+    formData.append('size', finalData.size || '');
+    formData.append('price', finalData.price || 0);
+    formData.append('selectionMethod', finalData.selectionMethod || '');
     formData.append('textDescription', finalData.textDescription || '');
-    formData.append('selectedRecommendation', JSON.stringify(finalData.selectedRecommendation || null));
-    if (finalData.contactInfo?.notes) {
-      formData.append('notes', finalData.contactInfo.notes);
+    formData.append('selectedRecommendation', finalData.selectedRecommendation ? JSON.stringify(finalData.selectedRecommendation) : '');
+    formData.append('notes', finalData.contactInfo.notes || '');
+    
+    // 添加用户上传的宠物照片
+    const userUploads = finalData.photos?.map(photo => photo.file).filter(file => file instanceof File) || [];
+    userUploads.forEach((file) => {
+      formData.append(`user_uploads`, file);
+    });
+    
+    // 添加参考图片
+    if (finalData.uploadedImage instanceof File) {
+      formData.append('uploadedImage', finalData.uploadedImage);
+    } else if (finalData.uploadedImage?.file instanceof File) {
+      formData.append('uploadedImage', finalData.uploadedImage.file);
     }
     
-    return formData;
+    // 使用统一的API服务层提交订单
+    const result = await ApiService.submitOrder(formData);
+    
+    // 订单提交成功
+    handleOrderSuccess(result.orderId || result.data?.orderId);
   };
+  
+  // 已删除传统上传和批量上传相关函数
+  // 现在统一使用 handleUnifiedUpload 函数
 
   // 订单成功处理函数
   const handleOrderSuccess = (orderId) => {
@@ -323,11 +194,6 @@ const Customization = () => {
     // 重置上传状态
     setUploadProgress({
       isUploading: false,
-      useBatchUpload: false,
-      batchIndex: 0,
-      totalBatches: 0,
-      completedBatches: 0,
-      currentBatchProgress: 0,
       overallProgress: 100
     });
     
@@ -430,13 +296,8 @@ const Customization = () => {
             <h3 className="text-lg font-semibold mb-4">正在处理您的订单...</h3>
             <div className="mb-4">
               <p className="text-sm text-gray-600 mb-2">
-                {uploadProgress.useBatchUpload ? '分批上传模式' : '标准上传模式'}
+                统一上传模式 - 火山引擎云函数
               </p>
-              {uploadProgress.useBatchUpload && (
-                <p className="text-sm text-gray-600 mb-2">
-                  批次进度: {uploadProgress.completedBatches}/{uploadProgress.totalBatches}
-                </p>
-              )}
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
               <div 

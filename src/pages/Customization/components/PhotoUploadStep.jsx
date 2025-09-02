@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Camera, AlertCircle, Lightbulb } from 'lucide-react';
 // 添加缺失的导入
-import { compressImage, compressImagesSmart } from '../../../utils/imageCompression';
+import { compressImagesSmart } from '../../../utils/imageCompression';
 import { preUploadCheck } from '../../../utils/uploadPrecheck';
 
 const PhotoUploadStep = ({ product, data, onNext, onPrev }) => {

@@ -74,8 +74,52 @@ app.use('/api/recommendations', async (req, res) => {
 });
 
 app.use('/api/submit-order', submitOrderLimiter, async (req, res) => {
-  const submitOrderHandler = await import('./api/submit-order.js');
-  submitOrderHandler.default(req, res);
+  try {
+    // 允许预检请求快速返回（CORS 已由全局 cors() 处理中，此处兜底）
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(204);
+    }
+
+    if (req.method !== 'POST') {
+      return res.status(404).send('Not Found');
+    }
+
+    const base = process.env.VITE_API_BASE_URL || '';
+    if (!base) {
+      return res.status(500).json({ error: 'VITE_API_BASE_URL 未配置' });
+    }
+
+    const target = `${base.replace(/\/$/, '')}/api/submit-order`;
+
+    // 透传必要请求头，避免 Host 覆盖
+    const headers = { ...req.headers };
+    delete headers.host;
+
+    // 使用 Node18+ 全局 fetch 作为最小依赖的转发实现
+    const response = await fetch(target, {
+      method: 'POST',
+      headers,
+      body: req, // 对于 multipart/form-data，直接透传原始请求流
+      duplex: 'half', // Node18+ 传递可读流作为请求体需要显式声明
+    });
+
+    // 透传响应
+    res.status(response.status);
+    // 过滤部分与本地响应冲突的头（按需）
+    response.headers.forEach((value, key) => {
+      if (['content-encoding', 'transfer-encoding'].includes(key.toLowerCase())) return;
+      res.setHeader(key, value);
+    });
+
+    const buf = Buffer.from(await response.arrayBuffer());
+    return res.send(buf);
+  } catch (err) {
+    console.error('[Proxy /api/submit-order] 转发失败:', err);
+    return res.status(502).json({
+      error: '上游服务不可用或转发失败',
+      details: err.message || String(err)
+    });
+  }
 });
 
 app.listen(port, () => {

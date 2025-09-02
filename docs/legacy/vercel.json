@@ -43,15 +43,6 @@
   "functions": {
     "api/submit-order.js": {
       "maxDuration": 45
-    },
-    "api/submit-order-batch.js": {
-      "maxDuration": 60
-    },
-    "api/upload-batch.js": {
-      "maxDuration": 45
-    },
-    "api/recommendations.js": {
-      "maxDuration": 10
     }
   }
 }
