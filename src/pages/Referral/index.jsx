@@ -1,4 +1,5 @@
 import React from 'react';
+import { getImagePath } from '../../utils/pathUtils';
 
 const Referral = () => {
     return (
@@ -8,8 +9,8 @@ const Referral = () => {
                 <p className="text-gray-600 mb-6">喜欢我们的服务吗？把它分享给您的朋友，你们都可以获得特别优惠！</p>
                 
                 <div className="flex justify-center space-x-4 mb-6">
-                    <img src="/pictures/WechatQRcode.JPG" alt="WeChat QR Code" className="w-32 h-32"/>
-                    <img src="/pictures/WhatsappQRcode.jpg" alt="WhatsApp QR Code" className="w-32 h-32"/>
+                    <img src={getImagePath('WechatQRcode.JPG')} alt="WeChat QR Code" className="w-32 h-32"/>
+                    <img src={getImagePath('WhatsappQRcode.jpg')} alt="WhatsApp QR Code" className="w-32 h-32"/>
                 </div>
 
                 <p className="text-sm text-gray-500">使用微信或WhatsApp扫描二维码，或分享您的专属推荐链接。</p>

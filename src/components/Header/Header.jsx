@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { getImagePath } from '../../utils/pathUtils';
 
 const Header = () => {
   return (
@@ -8,7 +9,7 @@ const Header = () => {
         <Link to="/" className="flex-shrink-0 group">
           <img 
             className="h-16 transition-transform duration-200 group-hover:scale-105" 
-            src="/pictures/pawsomeart_logo/PawsomeArt_logo_dark.png" 
+            src={getImagePath('pawsomeart_logo/PawsomeArt_logo_dark.png')} 
             alt="PawsomeArt Logo" 
           />
         </Link>

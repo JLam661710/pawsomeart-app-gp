@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { getImagePath } from '../../utils/pathUtils';
 
 const SubmissionSuccess = () => {
     const location = useLocation();
@@ -77,8 +78,8 @@ const SubmissionSuccess = () => {
                     <div className="mb-6">
                         <img
                             src={isWechatQR 
-                                ? '/pictures/WechatQRcode.JPG' 
-                                : '/pictures/WhatsappQRcode.jpg'
+                                ? getImagePath('WechatQRcode.JPG') 
+                                : getImagePath('WhatsappQRcode.jpg')
                             }
                             alt={isWechatQR ? '微信二维码' : 'WhatsApp二维码'}
                             className="w-48 h-48 mx-auto rounded-lg shadow-md"

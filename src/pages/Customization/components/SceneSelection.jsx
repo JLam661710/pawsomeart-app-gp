@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { compressImage } from '../../../utils/imageCompression';
+import { getImagePath } from '../../../utils/pathUtils';
 
 const SceneSelection = ({ product, photoType, portraitType, onComplete, onBack }) => {
   const [sceneMethod, setSceneMethod] = useState(null); // 'text', 'upload', 'recommendation'
@@ -31,14 +32,14 @@ const SceneSelection = ({ product, photoType, portraitType, onComplete, onBack }
 
   // 推荐场景图片（这里使用占位符，实际应该从 pictures/ArtworkToBeBackgroundRecommended 加载）
   const recommendedScenes = useMemo(() => [
-    { id: 1, name: '彩色表现主义', image: '/pictures/ArtworkToBeBackgroundRecommended/A-ColorfulExpressionism-1.png' },
-    { id: 2, name: '现代画作', image: '/pictures/ArtworkToBeBackgroundRecommended/B-ModernPaintingsWithSharpColorsAndBrushes-1.jpeg' },
-    { id: 3, name: '装饰图像', image: '/pictures/ArtworkToBeBackgroundRecommended/C-SmoothAndEye-catchingDecorativeImages-1.png' },
-    { id: 4, name: '印象派风景', image: '/pictures/ArtworkToBeBackgroundRecommended/D-ImpressionistLandscape-1.jpg' },
-    { id: 5, name: '点彩画法', image: '/pictures/ArtworkToBeBackgroundRecommended/E-PointillismBrushstrokeAndColor-1.jpg' },
-    { id: 6, name: '紫色印象', image: '/pictures/ArtworkToBeBackgroundRecommended/F-ThePurpleImpression-1.png' },
-    { id: 7, name: '抽象线条', image: '/pictures/ArtworkToBeBackgroundRecommended/H-AbstractLinesAndShapes-1.png' },
-    { id: 8, name: '广阔印象', image: '/pictures/ArtworkToBeBackgroundRecommended/G-TheImpressionOfAVastAndShallowPlace-1.png' }
+    { id: 1, name: '彩色表现主义', image: getImagePath('ArtworkToBeBackgroundRecommended/A-ColorfulExpressionism-1.png') },
+    { id: 2, name: '现代画作', image: getImagePath('ArtworkToBeBackgroundRecommended/B-ModernPaintingsWithSharpColorsAndBrushes-1.jpeg') },
+    { id: 3, name: '装饰图像', image: getImagePath('ArtworkToBeBackgroundRecommended/C-SmoothAndEye-catchingDecorativeImages-1.png') },
+    { id: 4, name: '印象派风景', image: getImagePath('ArtworkToBeBackgroundRecommended/D-ImpressionistLandscape-1.jpg') },
+    { id: 5, name: '点彩画法', image: getImagePath('ArtworkToBeBackgroundRecommended/E-PointillismBrushstrokeAndColor-1.jpg') },
+    { id: 6, name: '紫色印象', image: getImagePath('ArtworkToBeBackgroundRecommended/F-ThePurpleImpression-1.png') },
+    { id: 7, name: '抽象线条', image: getImagePath('ArtworkToBeBackgroundRecommended/H-AbstractLinesAndShapes-1.png') },
+    { id: 8, name: '广阔印象', image: getImagePath('ArtworkToBeBackgroundRecommended/G-TheImpressionOfAVastAndShallowPlace-1.png') }
   ], []);
 
   const handleFileUpload = async (e) => {

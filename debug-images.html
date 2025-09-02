@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片调试页面</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        img { max-width: 200px; margin: 10px; border: 1px solid #ddd; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>图片路径调试</h1>
+    
+    <div class="test-section">
+        <h2>当前路径信息</h2>
+        <p>当前URL: <span id="current-url"></span></p>
+        <p>Base URL: <span id="base-url"></span></p>
+        <p>图片基础路径: <span id="image-base"></span></p>
+    </div>
+
+    <div class="test-section">
+        <h2>测试不同路径格式</h2>
+        
+        <h3>绝对路径 (原始方式)</h3>
+        <img src="/pictures/pawsomeart_logo/PawsomeArt_logo_dark.png" alt="绝对路径" onerror="this.nextSibling.innerHTML='❌ 加载失败'" onload="this.nextSibling.innerHTML='✅ 加载成功'">
+        <span></span>
+        
+        <h3>相对路径</h3>
+        <img src="./pictures/pawsomeart_logo/PawsomeArt_logo_dark.png" alt="相对路径" onerror="this.nextSibling.innerHTML='❌ 加载失败'" onload="this.nextSibling.innerHTML='✅ 加载成功'">
+        <span></span>
+        
+        <h3>带base路径</h3>
+        <img src="/pawsomeart-app-gp/pictures/pawsomeart_logo/PawsomeArt_logo_dark.png" alt="带base路径" onerror="this.nextSibling.innerHTML='❌ 加载失败'" onload="this.nextSibling.innerHTML='✅ 加载成功'">
+        <span></span>
+        
+        <h3>场景图片测试</h3>
+        <img src="/pawsomeart-app-gp/pictures/ArtworkToBeBackgroundRecommended/A-ColorfulExpressionism-1.png" alt="场景图片" onerror="this.nextSibling.innerHTML='❌ 加载失败'" onload="this.nextSibling.innerHTML='✅ 加载成功'">
+        <span></span>
+        
+        <h3>名画图片测试</h3>
+        <img src="/pawsomeart-app-gp/pictures/FamousArtPortraitsRecommended/Girl with a Pearl Earring-Johannes Vermeer.png" alt="名画图片" onerror="this.nextSibling.innerHTML='❌ 加载失败'" onload="this.nextSibling.innerHTML='✅ 加载成功'">
+        <span></span>
+    </div>
+
+    <script>
+        // 显示当前路径信息
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('base-url').textContent = document.baseURI;
+        
+        // 模拟import.meta.env.BASE_URL的值
+        const baseUrl = window.location.pathname.includes('/pawsomeart-app-gp/') ? '/pawsomeart-app-gp/' : '/';
+        document.getElementById('image-base').textContent = baseUrl + 'pictures/';
+        
+        // 测试网络请求
+        const testPaths = [
+            '/pictures/pawsomeart_logo/PawsomeArt_logo_dark.png',
+            './pictures/pawsomeart_logo/PawsomeArt_logo_dark.png',
+            '/pawsomeart-app-gp/pictures/pawsomeart_logo/PawsomeArt_logo_dark.png'
+        ];
+        
+        console.log('=== 图片路径测试 ===');
+        testPaths.forEach(path => {
+            fetch(path)
+                .then(response => {
+                    console.log(`${path}: ${response.status} ${response.statusText}`);
+                })
+                .catch(error => {
+                    console.error(`${path}: 请求失败`, error);
+                });
+        });
+    </script>
+</body>
+</html>

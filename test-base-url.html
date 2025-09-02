@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BASE_URL测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .info { background: #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .test-image { max-width: 200px; margin: 10px; border: 2px solid #ddd; }
+        .success { border-color: green; }
+        .error { border-color: red; }
+    </style>
+</head>
+<body>
+    <h1>BASE_URL 和图片路径测试</h1>
+    
+    <div class="info">
+        <h3>当前环境信息</h3>
+        <p><strong>当前URL:</strong> <span id="current-url"></span></p>
+        <p><strong>Base URI:</strong> <span id="base-uri"></span></p>
+        <p><strong>Location pathname:</strong> <span id="pathname"></span></p>
+    </div>
+
+    <div class="info">
+        <h3>模拟 import.meta.env.BASE_URL</h3>
+        <p><strong>计算出的 BASE_URL:</strong> <span id="calculated-base-url"></span></p>
+        <p><strong>图片基础路径:</strong> <span id="image-base-path"></span></p>
+    </div>
+
+    <div class="info">
+        <h3>图片测试</h3>
+        <div id="image-tests"></div>
+    </div>
+
+    <script>
+        // 显示当前环境信息
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('base-uri').textContent = document.baseURI;
+        document.getElementById('pathname').textContent = window.location.pathname;
+        
+        // 模拟 Vite 的 BASE_URL 计算逻辑
+        function calculateBaseUrl() {
+            // 在生产环境中，BASE_URL 应该是 /pawsomeart-app-gp/
+            // 在开发环境中，BASE_URL 应该是 /
+            const pathname = window.location.pathname;
+            if (pathname.includes('/pawsomeart-app-gp/')) {
+                return '/pawsomeart-app-gp/';
+            }
+            return '/';
+        }
+        
+        const baseUrl = calculateBaseUrl();
+        document.getElementById('calculated-base-url').textContent = baseUrl;
+        document.getElementById('image-base-path').textContent = baseUrl + 'pictures/';
+        
+        // 测试图片路径
+        const testImages = [
+            {
+                name: 'Logo (计算路径)',
+                path: baseUrl + 'pictures/pawsomeart_logo/PawsomeArt_logo_dark.png'
+            },
+            {
+                name: 'Logo (硬编码)',
+                path: '/pawsomeart-app-gp/pictures/pawsomeart_logo/PawsomeArt_logo_dark.png'
+            },
+            {
+                name: '场景图片 (计算路径)',
+                path: baseUrl + 'pictures/ArtworkToBeBackgroundRecommended/A-ColorfulExpressionism-1.png'
+            },
+            {
+                name: '场景图片 (硬编码)',
+                path: '/pawsomeart-app-gp/pictures/ArtworkToBeBackgroundRecommended/A-ColorfulExpressionism-1.png'
+            }
+        ];
+        
+        const imageTestsContainer = document.getElementById('image-tests');
+        
+        testImages.forEach((test, index) => {
+            const div = document.createElement('div');
+            div.style.marginBottom = '20px';
+            
+            const title = document.createElement('h4');
+            title.textContent = test.name;
+            div.appendChild(title);
+            
+            const pathInfo = document.createElement('p');
+            pathInfo.textContent = `路径: ${test.path}`;
+            pathInfo.style.fontSize = '12px';
+            pathInfo.style.color = '#666';
+            div.appendChild(pathInfo);
+            
+            const img = document.createElement('img');
+            img.src = test.path;
+            img.className = 'test-image';
+            img.alt = test.name;
+            
+            const status = document.createElement('span');
+            status.style.marginLeft = '10px';
+            status.style.fontWeight = 'bold';
+            
+            img.onload = function() {
+                img.classList.add('success');
+                status.textContent = '✅ 加载成功';
+                status.style.color = 'green';
+                console.log(`✅ ${test.name}: 加载成功`);
+            };
+            
+            img.onerror = function() {
+                img.classList.add('error');
+                status.textContent = '❌ 加载失败';
+                status.style.color = 'red';
+                console.error(`❌ ${test.name}: 加载失败 - ${test.path}`);
+            };
+            
+            div.appendChild(img);
+            div.appendChild(status);
+            imageTestsContainer.appendChild(div);
+        });
+        
+        // 网络请求测试
+        console.log('=== 开始图片路径网络测试 ===');
+        testImages.forEach(test => {
+            fetch(test.path, { method: 'HEAD' })
+                .then(response => {
+                    console.log(`${test.name}: ${response.status} ${response.statusText}`);
+                })
+                .catch(error => {
+                    console.error(`${test.name}: 网络请求失败`, error);
+                });
+        });
+    </script>
+</body>
+</html>
