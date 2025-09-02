@@ -36,15 +36,35 @@ const logger = {
 /**
  * 构建完整的API URL
  */
-const buildApiUrl = (endpoint) => {
+const buildApiUrl = (endpoint, useFallback = false) => {
   // 如果是绝对路径，直接返回
   if (endpoint.startsWith('http')) {
     return endpoint;
   }
-  // 拼接基础URL和端点路径
-  const baseUrl = apiConfig.baseURL.endsWith('/') ? apiConfig.baseURL.slice(0, -1) : apiConfig.baseURL;
+  
+  // 选择使用主URL还是备用URL
+  const baseUrl = useFallback && apiConfig.fallbackURL 
+    ? apiConfig.fallbackURL 
+    : apiConfig.baseURL;
+  
+  const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
   const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  return `${baseUrl}${path}`;
+  return `${cleanBaseUrl}${path}`;
+};
+
+/**
+ * 检查API服务是否可用
+ */
+const checkApiAvailability = async (baseUrl) => {
+  try {
+    const response = await fetch(`${baseUrl}/api/health`, {
+      method: 'GET',
+      timeout: 5000
+    });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
 };
 
 /**
@@ -238,14 +258,44 @@ class ApiService {
       
       logger.debug('文件验证通过，开始上传');
       
-      // 发送请求
-      const response = await withRetry(async () => {
-        return await request(API_ENDPOINTS.SUBMIT_ORDER, {
-          method: 'POST',
-          body: formData,
-          timeout: UPLOAD_CONFIG.timeout
+      // 发送请求 - 首先尝试主API服务器
+      let response;
+      let lastError;
+      
+      try {
+        logger.debug('尝试连接主API服务器:', apiConfig.baseURL);
+        response = await withRetry(async () => {
+          return await request(API_ENDPOINTS.SUBMIT_ORDER, {
+            method: 'POST',
+            body: formData,
+            timeout: UPLOAD_CONFIG.timeout
+          });
         });
-      });
+      } catch (error) {
+        lastError = error;
+        logger.debug('主API服务器连接失败，尝试备用服务器');
+        
+        // 如果主服务器失败且有备用服务器，尝试备用服务器
+        if (apiConfig.fallbackURL) {
+          try {
+            const fallbackUrl = buildApiUrl(API_ENDPOINTS.SUBMIT_ORDER, true);
+            logger.debug('尝试连接备用服务器:', fallbackUrl);
+            
+            response = await withRetry(async () => {
+              return await fetch(fallbackUrl, {
+                method: 'POST',
+                body: formData,
+                timeout: UPLOAD_CONFIG.timeout
+              });
+            });
+          } catch (fallbackError) {
+            logger.error('备用服务器也连接失败:', fallbackError);
+            throw lastError; // 抛出原始错误
+          }
+        } else {
+          throw lastError;
+        }
+      }
       
       const result = await response.json();
       
@@ -325,6 +375,7 @@ export {
   validateFiles,
   handleApiError,
   buildApiUrl,
+  checkApiAvailability,
   logger
 };
 

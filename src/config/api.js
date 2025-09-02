@@ -13,8 +13,10 @@ const API_CONFIG = {
   // 生产环境配置 - 火山引擎函数服务
   production: {
     // 从环境变量读取API网关地址
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'https://your-volcengine-api-gateway-domain.com',
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'https://sd2nfsos05ikp3tvhepug.apigateway-cn-shanghai.volceapi.com',
     timeout: parseInt(import.meta.env.VITE_VOLCENGINE_FUNCTION_TIMEOUT) || 300000, // 5分钟超时
+    // 备用配置
+    fallbackURL: 'http://localhost:3001', // 本地开发服务器作为备用
   }
 };
 
