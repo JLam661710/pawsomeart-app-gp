@@ -62,7 +62,7 @@ const Lobby = () => {
               <span className="text-[#D2B48C]">艺术风格</span>
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              四种独特的创作风格，每一种都能完美诠释您爱宠的独特魅力
+              四种独特的创作风格<br/>每一种都能完美诠释您爱宠的独特魅力
             </p>
           </div>
           
