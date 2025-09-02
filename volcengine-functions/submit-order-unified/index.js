@@ -89,6 +89,8 @@ const getProductLine = (style) => {
     if (!style) return '未知系列';
     if (style.includes('经典定制款')) return '全新艺术创作系列';
     if (style.includes('名画致敬款')) return '全新艺术创作系列';
+    if (style.includes('姿态保留款')) return '参考照片创作系列';
+    if (style.includes('场景复刻款')) return '参考照片创作系列';
     if (style.includes('节日主题款')) return '节日主题系列';
     if (style.includes('卡通风格款')) return '卡通风格系列';
     return '全新艺术创作系列';
